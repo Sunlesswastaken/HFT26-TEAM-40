@@ -48,6 +48,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.sunless.lynq.demo.DemoData
 import com.sunless.lynq.domain.model.DeliveryStatus
+import com.sunless.lynq.domain.model.LynqMessage
+import com.sunless.lynq.domain.model.Peer
 import com.sunless.lynq.ui.components.AppleDivider
 import com.sunless.lynq.ui.components.AppleGroupedCard
 import com.sunless.lynq.ui.components.CmdBar
@@ -66,9 +68,30 @@ import com.sunless.lynq.ui.theme.Lynq
 import com.sunless.lynq.util.asClock
 import com.sunless.lynq.util.asRelative
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sunless.lynq.ui.LynqViewModel
+
+private data class ChatBubble(
+    val isMine: Boolean,
+    val body: String,
+    val time: Long,
+    val status: DeliveryStatus,
+    val route: List<String>,
+)
+
 @Composable
-fun MessagesScreen(navController: NavHostController) {
+fun MessagesScreen(
+    navController: NavHostController,
+    viewModel: LynqViewModel = viewModel(),
+) {
     var openPeerId by remember { mutableStateOf<String?>(null) }
+    val peers by viewModel.peers.collectAsStateWithLifecycle()
+    val messages by viewModel.messages.collectAsStateWithLifecycle()
+    val reachableCount by viewModel.reachableCount.collectAsStateWithLifecycle()
+
+    val effectivePeers = if (peers.isNotEmpty()) peers else DemoData.peers
+    val effectiveReachable = if (peers.isNotEmpty()) reachableCount else DemoData.reachableCount
 
     androidx.activity.compose.BackHandler(enabled = openPeerId != null) {
         openPeerId = null
@@ -82,11 +105,19 @@ fun MessagesScreen(navController: NavHostController) {
                     .verticalScroll(rememberScrollState())
                     .padding(bottom = 16.dp),
             ) {
-                ThreadList(onOpen = { openPeerId = it })
+                ThreadList(
+                    reachableCount = effectiveReachable,
+                    peers = effectivePeers,
+                    messages = messages,
+                    onOpen = { openPeerId = it },
+                )
             }
         } else {
+            val selectedPeer = effectivePeers.firstOrNull { it.id == openPeerId } ?: effectivePeers.first()
             OpenThreadView(
-                peerId = openPeerId!!,
+                peer = selectedPeer,
+                messages = messages.filter { it.senderId == selectedPeer.id || it.recipientId == selectedPeer.id },
+                onSend = { text -> viewModel.sendChatMessage(selectedPeer, text) },
                 onBack = { openPeerId = null },
                 modifier = Modifier.weight(1f),
             )
@@ -100,9 +131,14 @@ fun MessagesScreen(navController: NavHostController) {
 }
 
 @Composable
-private fun ThreadList(onOpen: (String) -> Unit) {
+private fun ThreadList(
+    reachableCount: Int,
+    peers: List<Peer>,
+    messages: List<LynqMessage>,
+    onOpen: (String) -> Unit,
+) {
     val pal = Lynq.pal
-    TopBar(reachableCount = DemoData.reachableCount, title = "Messages")
+    TopBar(reachableCount = reachableCount, title = "Messages")
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Text(
@@ -113,19 +149,25 @@ private fun ThreadList(onOpen: (String) -> Unit) {
         )
 
         AppleGroupedCard {
-            DemoData.threads.forEachIndexed { index, thread ->
+            peers.forEachIndexed { index, peer ->
+                val peerMessages = messages.filter { it.senderId == peer.id || it.recipientId == peer.id }
+                val latest = peerMessages.maxByOrNull { it.createdAt }
+                val preview = latest?.body ?: "Encrypted channel ready (${if (peer.hops == 1) "direct" else "${peer.hops} hops"})"
+                val lastAt = latest?.createdAt ?: peer.lastSeen
+                val status = latest?.status ?: DeliveryStatus.DELIVERED
+
                 if (index > 0) AppleDivider()
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onOpen(thread.peer.id) }
+                        .clickable { onOpen(peer.id) }
                         .padding(horizontal = 16.dp, vertical = 14.dp),
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     UserAvatar(
-                        name = thread.peer.name,
-                        isRelay = thread.peer.relaying,
+                        name = peer.name,
+                        isRelay = peer.relaying,
                         size = 46.dp,
                     )
 
@@ -140,22 +182,15 @@ private fun ThreadList(onOpen: (String) -> Unit) {
                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                             ) {
                                 Text(
-                                    text = thread.peer.name,
+                                    text = peer.name,
                                     style = AppleHeadline,
                                     fontWeight = FontWeight.SemiBold,
                                     color = pal.textPrimary,
                                 )
-                                if (thread.unread > 0) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(8.dp)
-                                            .background(pal.accentBlue, CircleShape),
-                                    )
-                                }
                             }
 
                             Text(
-                                text = thread.lastAt.asRelative(),
+                                text = lastAt.asRelative(),
                                 style = AppleCaption,
                                 color = pal.textMuted,
                             )
@@ -163,7 +198,7 @@ private fun ThreadList(onOpen: (String) -> Unit) {
 
                         Spacer(Modifier.height(3.dp))
                         Text(
-                            text = thread.preview,
+                            text = preview,
                             style = AppleSubhead,
                             color = pal.textSecondary,
                             maxLines = 1,
@@ -175,9 +210,9 @@ private fun ThreadList(onOpen: (String) -> Unit) {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            StatusChip(status = thread.status)
+                            StatusChip(status = status)
                             Text(
-                                text = if (thread.peer.hops == 1) "Direct Link" else "${thread.peer.hops} Hops Relay",
+                                text = if (peer.hops == 1) "Direct Link" else "${peer.hops} Hops Relay",
                                 style = AppleCaption,
                                 color = pal.textMuted,
                             )
@@ -191,19 +226,20 @@ private fun ThreadList(onOpen: (String) -> Unit) {
 
 @Composable
 private fun OpenThreadView(
-    peerId: String,
+    peer: Peer,
+    messages: List<LynqMessage>,
+    onSend: (String) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val pal = Lynq.pal
-    val peer = DemoData.peers.firstOrNull { it.id == peerId } ?: return
     var messageText by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
 
     Column(
         modifier = modifier.fillMaxWidth(),
     ) {
-        // Apple Style Seamless Conversation Header (No card background or border)
+        // Apple Style Seamless Conversation Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -232,7 +268,7 @@ private fun OpenThreadView(
                     color = pal.textPrimary,
                 )
                 Text(
-                    text = if (peer.hops == 1) "Direct Link · Encrypted" else "${peer.hops} Hops Relay · Encrypted",
+                    text = if (peer.hops == 1) "Direct Link · End-to-End Encrypted" else "${peer.hops} Hops Relay · End-to-End Encrypted",
                     style = AppleCaption,
                     color = pal.accentBlue,
                 )
@@ -241,7 +277,7 @@ private fun OpenThreadView(
 
         AppleDivider()
 
-        // Message Bubbles Container (takes available space, scrolls smoothly)
+        // Message Bubbles Container
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -250,23 +286,27 @@ private fun OpenThreadView(
                 .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            data class DemoChat(
-                val isMine: Boolean,
-                val body: String,
-                val time: Long,
-                val status: DeliveryStatus,
-                val route: List<String>,
-            )
-
             val now = System.currentTimeMillis()
-            val chatList = listOf(
-                DemoChat(false, "Are you all safe? Cellular and internet are completely down here.", now - 45 * 60_000, DeliveryStatus.DELIVERED, listOf(peer.name, "You")),
-                DemoChat(true, "We're safe. We formed a mesh at the east shelter with battery packs.", now - 44 * 60_000, DeliveryStatus.DELIVERED, listOf("You", peer.name)),
-                DemoChat(false, "Got it, two more people just connected through Aarav's phone.", now - 8 * 60_000, DeliveryStatus.DELIVERED, listOf(peer.name, "You")),
-                DemoChat(true, "Keep Lynq running in background. All packets will forward seamlessly.", now - 6 * 60_000, DeliveryStatus.DELIVERED, listOf("You", "Meera", peer.name)),
-            )
+            val bubbleList = if (messages.isNotEmpty()) {
+                messages.map { msg ->
+                    ChatBubble(
+                        isMine = msg.senderName == "You" || msg.senderId != peer.id,
+                        body = msg.body,
+                        time = msg.createdAt,
+                        status = msg.status,
+                        route = if (msg.routeHistory.isNotEmpty()) msg.routeHistory else listOf("You", peer.name),
+                    )
+                }
+            } else {
+                listOf(
+                    ChatBubble(false, "Are you all safe? Cellular and internet are completely down here.", now - 45 * 60_000, DeliveryStatus.DELIVERED, listOf(peer.name, "You")),
+                    ChatBubble(true, "We're safe. We formed a mesh at the east shelter with battery packs.", now - 44 * 60_000, DeliveryStatus.DELIVERED, listOf("You", peer.name)),
+                    ChatBubble(false, "Got it, two more people just connected through Aarav's phone.", now - 8 * 60_000, DeliveryStatus.DELIVERED, listOf(peer.name, "You")),
+                    ChatBubble(true, "Keep Lynq running in background. All packets will forward seamlessly.", now - 6 * 60_000, DeliveryStatus.DELIVERED, listOf("You", "Meera", peer.name)),
+                )
+            }
 
-            chatList.forEach { chat ->
+            bubbleList.forEach { chat ->
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = if (chat.isMine) Alignment.End else Alignment.Start,
@@ -365,7 +405,12 @@ private fun OpenThreadView(
                         .size(34.dp)
                         .clip(CircleShape)
                         .background(pal.accentBlue)
-                        .clickable { messageText = "" },
+                        .clickable {
+                            if (messageText.isNotBlank()) {
+                                onSend(messageText.trim())
+                                messageText = ""
+                            }
+                        },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(

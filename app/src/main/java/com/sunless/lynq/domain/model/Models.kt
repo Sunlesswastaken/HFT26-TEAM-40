@@ -1,9 +1,12 @@
 package com.sunless.lynq.domain.model
 
+import kotlinx.serialization.Serializable
+
 /**
  * Wire types. [ACK] and [PRESENCE] never reach the UI as normal messages; they are
  * handled by the engine.
  */
+@Serializable
 enum class MessageType {
     CHAT,
     SOS,
@@ -12,6 +15,7 @@ enum class MessageType {
 }
 
 /** Processing order for the outgoing queue. Lower [weight] wins. */
+@Serializable
 enum class Priority(val weight: Int) {
     CRITICAL(0),
     HIGH(1),
@@ -23,6 +27,7 @@ enum class Priority(val weight: Int) {
  *
  * `PENDING` -> `SENT` -> `RELAYED` -> `DELIVERED`.
  */
+@Serializable
 enum class DeliveryStatus(val label: String) {
     PENDING("Queued"),
     SENT("Sent"),
@@ -33,6 +38,7 @@ enum class DeliveryStatus(val label: String) {
 }
 
 /** A device we can currently (or recently could) reach. */
+@Serializable
 data class Peer(
     /** Fingerprint of the peer's public key. Stable identity across sessions. */
     val id: String,
@@ -43,6 +49,8 @@ data class Peer(
     /** Distance in hops from this device; 1 = direct link. */
     val hops: Int = 1,
     val lastSeen: Long = System.currentTimeMillis(),
+    /** Optional base64-encoded public key for end-to-end encryption */
+    val publicKey: String? = null,
 )
 
 /**

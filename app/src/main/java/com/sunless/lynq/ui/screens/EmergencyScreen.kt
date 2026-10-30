@@ -81,6 +81,9 @@ import com.sunless.lynq.ui.theme.AppleTitle2
 import com.sunless.lynq.ui.theme.Lynq
 import com.sunless.lynq.ui.theme.TechCodeStyle
 import com.sunless.lynq.util.asRelative
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sunless.lynq.ui.LynqViewModel
 
 private data class CategoryItem(val name: String, val icon: ImageVector)
 
@@ -92,15 +95,28 @@ private val CATEGORIES = listOf(
 )
 
 @Composable
-fun EmergencyScreen(navController: NavHostController) {
+fun EmergencyScreen(
+    navController: NavHostController,
+    viewModel: LynqViewModel = viewModel(),
+) {
     val pal = Lynq.pal
+    val peers by viewModel.peers.collectAsStateWithLifecycle()
+    val reachableCount by viewModel.reachableCount.collectAsStateWithLifecycle()
+    val alerts by viewModel.alerts.collectAsStateWithLifecycle()
+    val activeBroadcast by viewModel.activeSosBroadcasting.collectAsStateWithLifecycle()
+    val lastSos by viewModel.lastSentSos.collectAsStateWithLifecycle()
+
+    val effectiveReachable = if (peers.isNotEmpty()) reachableCount else DemoData.reachableCount
+    val effectiveAlerts = if (alerts.isNotEmpty()) alerts else DemoData.alerts
+
     var selectedCategory by rememberSaveable { mutableStateOf(CATEGORIES.first().name) }
     var note by rememberSaveable { mutableStateOf("") }
     var shareLocation by rememberSaveable { mutableStateOf(true) }
-    var isBroadcasting by rememberSaveable { mutableStateOf(false) }
+
+    val isBroadcasting = activeBroadcast
 
     androidx.activity.compose.BackHandler(enabled = isBroadcasting) {
-        isBroadcasting = false
+        viewModel.cancelSos()
     }
 
     val transition = rememberInfiniteTransition(label = "sosPulse")
@@ -121,7 +137,7 @@ fun EmergencyScreen(navController: NavHostController) {
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 24.dp),
         ) {
-            TopBar(reachableCount = DemoData.reachableCount, title = "Emergency SOS")
+            TopBar(reachableCount = effectiveReachable, title = "Emergency SOS")
 
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 Text(
@@ -259,7 +275,13 @@ fun EmergencyScreen(navController: NavHostController) {
 
                     // Apple Emergency SOS Broadcast Trigger Button
                     Surface(
-                        onClick = { isBroadcasting = true },
+                        onClick = {
+                            viewModel.sendSos(
+                                category = selectedCategory,
+                                note = note,
+                                shareLocation = shareLocation,
+                            )
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
                         color = pal.emergencyRed,
@@ -295,13 +317,47 @@ fun EmergencyScreen(navController: NavHostController) {
                             )
                         }
                     }
+
+                    Spacer(Modifier.height(10.dp))
+
+                    // Quick Simulation Trigger for Demoing
+                    Surface(
+                        onClick = {
+                            viewModel.triggerSimulation(
+                                category = selectedCategory,
+                                note = if (note.isBlank()) "Asthma emergency, need inhaler" else note,
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        color = pal.surfaceElevated,
+                        border = BorderStroke(0.5.dp, pal.border),
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp, horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = "Simulate 4-Node Relay (You → Aarav → Kabir → Priya)",
+                                style = AppleFootnote,
+                                color = pal.accentBlue,
+                                fontWeight = FontWeight.Medium,
+                            )
+                        }
+                    }
                 } else {
                     // LIVE ACTIVE BROADCAST STATE
+                    val currentRoute = lastSos?.routeHistory ?: listOf("You", "Aarav", "Kabir")
+                    val isDelivered = lastSos?.status == DeliveryStatus.DELIVERED
+
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
                         color = pal.surface,
-                        border = BorderStroke(1.dp, pal.emergencyRed),
+                        border = BorderStroke(1.dp, if (isDelivered) pal.accentGreen else pal.emergencyRed),
                     ) {
                         Column(modifier = Modifier.padding(20.dp)) {
                             Row(
@@ -316,25 +372,25 @@ fun EmergencyScreen(navController: NavHostController) {
                                     Box(
                                         modifier = Modifier
                                             .size(12.dp)
-                                            .background(pal.emergencyRed, CircleShape)
-                                            .border(4.dp, pal.emergencyRed.copy(alpha = pulseAlpha), CircleShape),
+                                            .background(if (isDelivered) pal.accentGreen else pal.emergencyRed, CircleShape)
+                                            .border(4.dp, (if (isDelivered) pal.accentGreen else pal.emergencyRed).copy(alpha = pulseAlpha), CircleShape),
                                     )
                                     Text(
-                                        text = "SOS BROADCASTING",
+                                        text = if (isDelivered) "SOS DELIVERED (ACK)" else "SOS BROADCASTING",
                                         style = AppleHeadline,
                                         fontWeight = FontWeight.Bold,
-                                        color = pal.emergencyRed,
+                                        color = if (isDelivered) pal.accentGreen else pal.emergencyRed,
                                     )
                                 }
 
                                 Surface(
                                     shape = RoundedCornerShape(100.dp),
-                                    color = pal.emergencyRed.copy(alpha = 0.15f),
+                                    color = (if (isDelivered) pal.accentGreen else pal.emergencyRed).copy(alpha = 0.15f),
                                 ) {
                                     Text(
-                                        text = "CRITICAL",
+                                        text = if (isDelivered) "ACK CONFIRMED" else "CRITICAL",
                                         style = AppleCaption,
-                                        color = pal.emergencyRed,
+                                        color = if (isDelivered) pal.accentGreen else pal.emergencyRed,
                                         fontWeight = FontWeight.Bold,
                                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                                     )
@@ -359,7 +415,7 @@ fun EmergencyScreen(navController: NavHostController) {
                             if (shareLocation) {
                                 Spacer(Modifier.height(4.dp))
                                 Text(
-                                    text = "Location: 19.0760° N, 72.8777° E (Shared)",
+                                    text = "Location: 28.6139° N, 77.2090° E (Shared)",
                                     style = AppleCaption,
                                     color = pal.accentBlue,
                                 )
@@ -371,26 +427,30 @@ fun EmergencyScreen(navController: NavHostController) {
 
                             // Live Multi-hop steps
                             Text(
-                                text = "Relay Pathway",
+                                text = "Relay Pathway (${currentRoute.size} nodes)",
                                 style = AppleFootnote,
                                 color = pal.textSecondary,
                                 fontWeight = FontWeight.Medium,
                             )
                             Spacer(Modifier.height(8.dp))
 
-                            HopStep("Origin (You)", "Just now", done = true)
-                            HopStep("Hop 1: Aarav (Relay)", "1s ago", done = true)
-                            HopStep("Hop 2: Kabir (Relay)", "2s ago", done = true)
-                            HopStep("Hop 3: Priya (Recipient)", null, done = false)
+                            currentRoute.forEachIndexed { i, node ->
+                                val stepLabel = when (i) {
+                                    0 -> "Origin ($node)"
+                                    currentRoute.size - 1 -> if (isDelivered) "Final Recipient ($node)" else "Hop $i: $node (Relaying)"
+                                    else -> "Hop $i: $node (Relay)"
+                                }
+                                HopStep(stepLabel, if (i == 0) "Initiated" else "${i * 2}s ago", done = true)
+                            }
 
                             Spacer(Modifier.height(16.dp))
-                            HopMeter(reached = 3, total = 6)
+                            HopMeter(reached = currentRoute.size.coerceAtMost(6), total = 6)
 
                             Spacer(Modifier.height(20.dp))
 
                             // Cancel / Resolve button
                             Button(
-                                onClick = { isBroadcasting = false },
+                                onClick = { viewModel.cancelSos() },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(14.dp),
                                 colors = ButtonDefaults.buttonColors(
@@ -399,7 +459,7 @@ fun EmergencyScreen(navController: NavHostController) {
                                 ),
                             ) {
                                 Text(
-                                    text = "Cancel SOS Broadcast",
+                                    text = if (isDelivered) "Dismiss SOS Alert" else "Cancel SOS Broadcast",
                                     style = AppleSubhead,
                                     fontWeight = FontWeight.SemiBold,
                                     modifier = Modifier.padding(vertical = 4.dp),
@@ -416,7 +476,7 @@ fun EmergencyScreen(navController: NavHostController) {
                 Spacer(Modifier.height(10.dp))
 
                 AppleGroupedCard {
-                    DemoData.alerts.forEachIndexed { index, alert ->
+                    effectiveAlerts.forEachIndexed { index, alert ->
                         if (index > 0) AppleDivider()
                         Row(
                             modifier = Modifier

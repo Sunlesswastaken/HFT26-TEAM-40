@@ -59,12 +59,23 @@ import com.sunless.lynq.ui.theme.AppleSubhead
 import com.sunless.lynq.ui.theme.Lynq
 import com.sunless.lynq.ui.theme.TechCodeStyle
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sunless.lynq.ui.LynqViewModel
+
 @Composable
-fun SettingsScreen(navController: NavHostController) {
+fun SettingsScreen(
+    navController: NavHostController,
+    viewModel: LynqViewModel = viewModel(),
+) {
     val pal = Lynq.pal
+    val isMeshActive by viewModel.isMeshActive.collectAsStateWithLifecycle()
+    val reachableCount by viewModel.reachableCount.collectAsStateWithLifecycle()
+    val peers by viewModel.peers.collectAsStateWithLifecycle()
+    val effectiveReachable = if (peers.isNotEmpty()) reachableCount else DemoData.reachableCount
+
     var autoRelay by remember { mutableStateOf(true) }
     var locationSharing by remember { mutableStateOf(true) }
-    var highPowerScan by remember { mutableStateOf(true) }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -73,7 +84,7 @@ fun SettingsScreen(navController: NavHostController) {
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 24.dp),
         ) {
-            TopBar(reachableCount = DemoData.reachableCount, title = "Settings")
+            TopBar(reachableCount = effectiveReachable, title = "Settings")
 
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 // Profile Section
@@ -85,17 +96,17 @@ fun SettingsScreen(navController: NavHostController) {
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
-                        UserAvatar(name = DemoData.MY_NAME, size = 52.dp, isRelay = true)
+                        UserAvatar(name = viewModel.myDeviceName, size = 52.dp, isRelay = true)
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = DemoData.MY_NAME,
+                                text = viewModel.myDeviceName,
                                 style = AppleHeadline,
                                 fontWeight = FontWeight.Bold,
                                 color = pal.textPrimary,
                             )
                             Spacer(Modifier.height(2.dp))
                             Text(
-                                text = "${DemoData.MY_DEVICE} · Keystore Verified",
+                                text = "Android · Keystore Verified",
                                 style = AppleFootnote,
                                 color = pal.accentGreen,
                             )
@@ -113,13 +124,13 @@ fun SettingsScreen(navController: NavHostController) {
                     ) {
                         Column {
                             Text(
-                                text = "Device Fingerprint",
+                                text = "Device Fingerprint (ID)",
                                 style = AppleFootnote,
                                 color = pal.textSecondary,
                             )
                             Spacer(Modifier.height(2.dp))
                             Text(
-                                text = "9f3c • a7e5 • 4b02 • c1aa",
+                                text = viewModel.myDeviceId,
                                 style = TechCodeStyle,
                                 color = pal.textPrimary,
                                 fontSize = 12.sp,
@@ -144,10 +155,10 @@ fun SettingsScreen(navController: NavHostController) {
                     SettingsSwitchRow(
                         icon = Icons.Rounded.Wifi,
                         iconBg = pal.accentBlue,
-                        title = "High-Power Wi-Fi Discovery",
-                        subtitle = "Strategy.P2P_CLUSTER active",
-                        checked = highPowerScan,
-                        onCheckedChange = { highPowerScan = it },
+                        title = "Mesh Radio & Discovery",
+                        subtitle = if (isMeshActive) "Strategy.P2P_CLUSTER online" else "Mesh offline",
+                        checked = isMeshActive,
+                        onCheckedChange = { viewModel.toggleMesh(it) },
                     )
                     AppleDivider()
                     SettingsSwitchRow(

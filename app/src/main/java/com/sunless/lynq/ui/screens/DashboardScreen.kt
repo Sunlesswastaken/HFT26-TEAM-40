@@ -17,6 +17,7 @@ import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Sensors
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -47,9 +48,28 @@ import com.sunless.lynq.ui.theme.AppleSubhead
 import com.sunless.lynq.ui.theme.Lynq
 import com.sunless.lynq.util.asRelative
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sunless.lynq.ui.LynqViewModel
+
 @Composable
-fun DashboardScreen(navController: NavHostController) {
+fun DashboardScreen(
+    navController: NavHostController,
+    viewModel: LynqViewModel = viewModel(),
+) {
     val pal = Lynq.pal
+
+    val peers by viewModel.peers.collectAsStateWithLifecycle()
+    val reachableCount by viewModel.reachableCount.collectAsStateWithLifecycle()
+    val relayCount by viewModel.relayCount.collectAsStateWithLifecycle()
+    val pendingMessages by viewModel.pendingMessages.collectAsStateWithLifecycle()
+    val messages by viewModel.messages.collectAsStateWithLifecycle()
+
+    val activePeers = if (peers.isNotEmpty()) peers else DemoData.peers
+    val effectiveReachable = if (peers.isNotEmpty()) reachableCount else DemoData.reachableCount
+    val effectiveRelays = if (peers.isNotEmpty()) relayCount else DemoData.relayCount
+    val effectivePending = if (messages.isNotEmpty()) pendingMessages.size else DemoData.pendingMessages.size
+    val effectiveActivity = if (messages.isNotEmpty()) messages else DemoData.activity
 
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -58,7 +78,7 @@ fun DashboardScreen(navController: NavHostController) {
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 24.dp),
         ) {
-            TopBar(reachableCount = DemoData.reachableCount, title = "Network")
+            TopBar(reachableCount = effectiveReachable, title = "Network")
 
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 // Headline Status
@@ -71,7 +91,7 @@ fun DashboardScreen(navController: NavHostController) {
 
                 // Protagonist: Live Obsidian Mesh Graph
                 MeshGraph(
-                    peers = DemoData.peers,
+                    peers = activePeers,
                     liveRoute = listOf("You", "Aarav", "Kabir", "Priya"),
                     height = 230.dp,
                     interactive = true,
@@ -92,21 +112,21 @@ fun DashboardScreen(navController: NavHostController) {
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     MetricCard(
-                        value = "${DemoData.reachableCount}",
+                        value = "$effectiveReachable",
                         label = "Reachable",
                         accentColor = pal.accentBlue,
                         icon = Icons.Rounded.Sensors,
                         modifier = Modifier.weight(1f),
                     )
                     MetricCard(
-                        value = "${DemoData.relayCount}",
+                        value = "$effectiveRelays",
                         label = "Relaying",
                         accentColor = pal.accentGreen,
                         icon = Icons.Rounded.Hub,
                         modifier = Modifier.weight(1f),
                     )
                     MetricCard(
-                        value = "${DemoData.pendingMessages.size}",
+                        value = "$effectivePending",
                         label = "Queued",
                         accentColor = pal.warningAmber,
                         icon = Icons.Rounded.Schedule,
@@ -126,7 +146,7 @@ fun DashboardScreen(navController: NavHostController) {
                 Spacer(Modifier.height(10.dp))
 
                 AppleGroupedCard {
-                    DemoData.activity.take(4).forEachIndexed { index, msg ->
+                    effectiveActivity.take(4).forEachIndexed { index, msg ->
                         if (index > 0) AppleDivider()
                         ActivityRow(
                             who = msg.senderName,

@@ -20,9 +20,13 @@ import com.sunless.lynq.ui.screens.MeshExplorerScreen
 import com.sunless.lynq.ui.screens.MessagesScreen
 import com.sunless.lynq.ui.screens.SettingsScreen
 
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sunless.lynq.ui.LynqViewModel
+
 @Composable
 fun AppNavigation(
     navController: NavHostController = rememberNavController(),
+    viewModel: LynqViewModel = viewModel(),
     modifier: Modifier = Modifier,
 ) {
     NavHost(
@@ -43,11 +47,11 @@ fun AppNavigation(
             slideOutHorizontally(tween(240)) { it / 4 } + fadeOut(tween(180))
         },
     ) {
-        composable(Screen.Dashboard.route) { DashboardScreen(navController) }
-        composable(Screen.Messages.route) { MessagesScreen(navController) }
-        composable(Screen.Emergency.route) { EmergencyScreen(navController) }
-        composable(Screen.MeshExplorer.route) { MeshExplorerScreen(navController) }
-        composable(Screen.Settings.route) { SettingsScreen(navController) }
+        composable(Screen.Dashboard.route) { DashboardScreen(navController, viewModel) }
+        composable(Screen.Messages.route) { MessagesScreen(navController, viewModel) }
+        composable(Screen.Emergency.route) { EmergencyScreen(navController, viewModel) }
+        composable(Screen.MeshExplorer.route) { MeshExplorerScreen(navController, viewModel) }
+        composable(Screen.Settings.route) { SettingsScreen(navController, viewModel) }
     }
 }
 

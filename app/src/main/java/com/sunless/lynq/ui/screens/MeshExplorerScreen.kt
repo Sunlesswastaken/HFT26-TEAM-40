@@ -59,6 +59,10 @@ import com.sunless.lynq.ui.theme.Lynq
 import com.sunless.lynq.util.asRelative
 import kotlinx.coroutines.launch
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sunless.lynq.ui.LynqViewModel
+
 /**
  * Obsidian-Inspired Mesh Explorer Screen.
  *
@@ -71,8 +75,19 @@ import kotlinx.coroutines.launch
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MeshExplorerScreen(navController: NavHostController) {
+fun MeshExplorerScreen(
+    navController: NavHostController,
+    viewModel: LynqViewModel = viewModel(),
+) {
     val pal = Lynq.pal
+    val peers by viewModel.peers.collectAsStateWithLifecycle()
+    val reachableCount by viewModel.reachableCount.collectAsStateWithLifecycle()
+    val messages by viewModel.messages.collectAsStateWithLifecycle()
+
+    val effectivePeers = if (peers.isNotEmpty()) peers else DemoData.peers
+    val effectiveReachable = if (peers.isNotEmpty()) reachableCount else DemoData.reachableCount
+    val effectiveActivity = if (messages.isNotEmpty()) messages else DemoData.activity
+
     val liveRoute = listOf("You", "Aarav", "Kabir", "Priya")
     var selectedPeerName by remember { mutableStateOf<String?>(null) }
     var showDirectorySheet by remember { mutableStateOf(false) }
@@ -80,7 +95,7 @@ fun MeshExplorerScreen(navController: NavHostController) {
     val scope = rememberCoroutineScope()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        TopBar(reachableCount = DemoData.reachableCount, title = "Mesh Graph")
+        TopBar(reachableCount = effectiveReachable, title = "Mesh Graph")
 
         Column(
             modifier = Modifier
@@ -109,7 +124,7 @@ fun MeshExplorerScreen(navController: NavHostController) {
                     .weight(1f),
             ) {
                 MeshGraph(
-                    peers = DemoData.peers,
+                    peers = effectivePeers,
                     liveRoute = liveRoute,
                     interactive = true,
                     selectedNodeName = selectedPeerName,
@@ -210,12 +225,12 @@ fun MeshExplorerScreen(navController: NavHostController) {
             ) {
                 SectionHeader(
                     title = "Discovered Mesh Nodes",
-                    actionText = "${DemoData.peers.size} Connected",
+                    actionText = "${effectivePeers.size} Connected",
                 )
                 Spacer(Modifier.height(10.dp))
 
                 AppleGroupedCard {
-                    DemoData.peers.forEachIndexed { index, peer ->
+                    effectivePeers.forEachIndexed { index, peer ->
                         if (index > 0) AppleDivider()
                         PeerRow(peer = peer, onClick = {
                             selectedPeerName = peer.name
@@ -232,7 +247,7 @@ fun MeshExplorerScreen(navController: NavHostController) {
                 Spacer(Modifier.height(10.dp))
 
                 AppleGroupedCard {
-                    DemoData.activity.take(3).forEachIndexed { index, msg ->
+                    effectiveActivity.take(3).forEachIndexed { index, msg ->
                         if (index > 0) AppleDivider()
                         Row(
                             modifier = Modifier
