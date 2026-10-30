@@ -9,9 +9,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imeNestedScroll
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,6 +36,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -97,7 +101,11 @@ fun MessagesScreen(
         openPeerId = null
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .imePadding(),
+    ) {
         if (openPeerId == null) {
             Column(
                 modifier = Modifier
@@ -112,6 +120,11 @@ fun MessagesScreen(
                     onOpen = { openPeerId = it },
                 )
             }
+
+            CmdBar(
+                currentRoute = Screen.Messages.route,
+                onSelect = { navController.navigateTab(it) },
+            )
         } else {
             val selectedPeer = effectivePeers.firstOrNull { it.id == openPeerId } ?: effectivePeers.first()
             OpenThreadView(
@@ -119,14 +132,9 @@ fun MessagesScreen(
                 messages = messages.filter { it.senderId == selectedPeer.id || it.recipientId == selectedPeer.id },
                 onSend = { text -> viewModel.sendChatMessage(selectedPeer, text) },
                 onBack = { openPeerId = null },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxSize(),
             )
         }
-
-        CmdBar(
-            currentRoute = Screen.Messages.route,
-            onSelect = { navController.navigateTab(it) },
-        )
     }
 }
 
@@ -224,6 +232,7 @@ private fun ThreadList(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun OpenThreadView(
     peer: Peer,
@@ -235,6 +244,10 @@ private fun OpenThreadView(
     val pal = Lynq.pal
     var messageText by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
+
+    LaunchedEffect(messages.size, scrollState.maxValue) {
+        scrollState.animateScrollTo(scrollState.maxValue)
+    }
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -282,6 +295,7 @@ private fun OpenThreadView(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
+                .imeNestedScroll()
                 .verticalScroll(scrollState)
                 .padding(horizontal = 16.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -376,7 +390,7 @@ private fun OpenThreadView(
             border = BorderStroke(0.5.dp, pal.border),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 6.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 12.dp),
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
