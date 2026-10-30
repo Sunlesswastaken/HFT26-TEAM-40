@@ -64,6 +64,7 @@ import com.sunless.lynq.domain.model.DeliveryStatus
 import com.sunless.lynq.ui.components.AppleDivider
 import com.sunless.lynq.ui.components.AppleGroupedCard
 import com.sunless.lynq.ui.components.CmdBar
+import com.sunless.lynq.ui.components.HoldToSosButton
 import com.sunless.lynq.ui.components.HopMeter
 import com.sunless.lynq.ui.components.HopStep
 import com.sunless.lynq.ui.components.ModernRouteTrace
@@ -273,50 +274,17 @@ fun EmergencyScreen(
 
                     Spacer(Modifier.height(24.dp))
 
-                    // Apple Emergency SOS Broadcast Trigger Button
-                    Surface(
-                        onClick = {
+                    // 3-Second Hold-to-Confirm Emergency SOS Button
+                    HoldToSosButton(
+                        onHoldComplete = {
                             viewModel.sendSos(
                                 category = selectedCategory,
                                 note = note,
                                 shareLocation = shareLocation,
                             )
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(20.dp),
-                        color = pal.emergencyRed,
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 18.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Emergency,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(22.dp),
-                                )
-                                Text(
-                                    text = "Send Emergency SOS",
-                                    style = AppleHeadline,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                )
-                            }
-                            Spacer(Modifier.height(3.dp))
-                            Text(
-                                text = "Instantly floods across all reachable phones",
-                                style = AppleCaption,
-                                color = Color.White.copy(alpha = 0.85f),
-                            )
-                        }
-                    }
+                        holdDurationMillis = 3000,
+                    )
 
                     Spacer(Modifier.height(10.dp))
 

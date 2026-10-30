@@ -42,6 +42,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
+import kotlinx.coroutines.launch
 import com.sunless.lynq.domain.model.DeliveryStatus
 import com.sunless.lynq.ui.theme.AppleBody
 import com.sunless.lynq.ui.theme.AppleCaption
@@ -49,6 +59,126 @@ import com.sunless.lynq.ui.theme.AppleFootnote
 import com.sunless.lynq.ui.theme.AppleHeadline
 import com.sunless.lynq.ui.theme.AppleSubhead
 import com.sunless.lynq.ui.theme.Lynq
+
+/**
+ * 3-Second Hold-to-Confirm Emergency SOS Button.
+ * Requires user to continuously press and hold for 3 seconds to prevent accidental sends.
+ * Features an animated progress fill, live countdown, haptic cues, and Apple satellite aesthetic.
+ */
+@Composable
+fun HoldToSosButton(
+    onHoldComplete: () -> Unit,
+    modifier: Modifier = Modifier,
+    holdDurationMillis: Int = 3000,
+) {
+    val pal = Lynq.pal
+    val haptics = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+    val progress = remember { Animatable(0f) }
+    var isHolding by remember { mutableStateOf(false) }
+
+    val transition = rememberInfiniteTransition(label = "holdSosPulse")
+    val pulseAlpha by transition.animateFloat(
+        initialValue = 0.2f,
+        targetValue = 0.6f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "pulseAlpha",
+    )
+
+    val currentSecondsLeft = (kotlin.math.ceil((1f - progress.value) * (holdDurationMillis / 1000f))).toInt().coerceAtLeast(1)
+
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        isHolding = true
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        val job = scope.launch {
+                            progress.animateTo(
+                                targetValue = 1f,
+                                animationSpec = tween(
+                                    durationMillis = holdDurationMillis,
+                                    easing = LinearEasing,
+                                ),
+                            )
+                            // Reached 3 full seconds! Trigger SOS
+                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onHoldComplete()
+                            progress.snapTo(0f)
+                            isHolding = false
+                        }
+                        try {
+                            awaitRelease()
+                        } finally {
+                            job.cancel()
+                            isHolding = false
+                            scope.launch {
+                                progress.animateTo(0f, tween(250, easing = FastOutSlowInEasing))
+                            }
+                        }
+                    },
+                )
+            },
+        shape = RoundedCornerShape(20.dp),
+        color = pal.emergencyRed,
+        border = BorderStroke(1.dp, if (isHolding) Color.White.copy(alpha = 0.6f) else pal.emergencyRed),
+    ) {
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            // Animated Progress Fill (Left to Right)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(fraction = progress.value)
+                    .matchParentSize()
+                    .background(Color.White.copy(alpha = 0.25f)),
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 18.dp, horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Emergency,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(22.dp)
+                            .border(
+                                width = if (isHolding) 2.dp else 0.dp,
+                                color = Color.White.copy(alpha = pulseAlpha),
+                                shape = CircleShape,
+                            ),
+                    )
+                    Text(
+                        text = if (isHolding) "Hold for SOS (${currentSecondsLeft}s)" else "Hold 3s for Emergency SOS",
+                        style = AppleHeadline,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                    )
+                }
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    text = if (isHolding) "Keep holding… Release to cancel" else "Press and hold 3 seconds to broadcast alert",
+                    style = AppleCaption,
+                    color = Color.White.copy(alpha = 0.85f),
+                )
+            }
+        }
+    }
+}
 
 /**
  * Apple Minimalist Emergency SOS Action Trigger.
