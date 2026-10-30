@@ -129,7 +129,9 @@ fun MessagesScreen(
             val selectedPeer = effectivePeers.firstOrNull { it.id == openPeerId } ?: effectivePeers.first()
             OpenThreadView(
                 peer = selectedPeer,
-                messages = messages.filter { it.senderId == selectedPeer.id || it.recipientId == selectedPeer.id },
+                messages = messages
+                    .filter { it.senderId == selectedPeer.id || it.recipientId == selectedPeer.id }
+                    .sortedBy { it.createdAt },
                 onSend = { text -> viewModel.sendChatMessage(selectedPeer, text) },
                 onBack = { openPeerId = null },
                 modifier = Modifier.fillMaxSize(),
@@ -302,7 +304,7 @@ private fun OpenThreadView(
         ) {
             val now = System.currentTimeMillis()
             val bubbleList = if (messages.isNotEmpty()) {
-                messages.map { msg ->
+                messages.sortedBy { it.createdAt }.map { msg ->
                     ChatBubble(
                         isMine = msg.senderName == "You" || msg.senderId != peer.id,
                         body = msg.body,
