@@ -1,5 +1,7 @@
 package com.sunless.lynq.ui.screens
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,23 +12,31 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Hub
-import androidx.compose.material.icons.rounded.NearMe
-import androidx.compose.material.icons.rounded.Sensors
-import androidx.compose.material.icons.rounded.WifiTethering
+import androidx.compose.material.icons.automirrored.rounded.FormatListBulleted
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.sunless.lynq.demo.DemoData
 import com.sunless.lynq.domain.model.Peer
@@ -34,7 +44,6 @@ import com.sunless.lynq.ui.components.AppleDivider
 import com.sunless.lynq.ui.components.AppleGroupedCard
 import com.sunless.lynq.ui.components.CmdBar
 import com.sunless.lynq.ui.components.MeshGraph
-import com.sunless.lynq.ui.components.MetricCard
 import com.sunless.lynq.ui.components.ModernRouteTrace
 import com.sunless.lynq.ui.components.SectionHeader
 import com.sunless.lynq.ui.components.StatusChip
@@ -42,97 +51,184 @@ import com.sunless.lynq.ui.components.TopBar
 import com.sunless.lynq.ui.components.UserAvatar
 import com.sunless.lynq.ui.navigation.Screen
 import com.sunless.lynq.ui.navigation.navigateTab
-import com.sunless.lynq.ui.theme.AppleBody
 import com.sunless.lynq.ui.theme.AppleCaption
 import com.sunless.lynq.ui.theme.AppleFootnote
 import com.sunless.lynq.ui.theme.AppleHeadline
 import com.sunless.lynq.ui.theme.AppleSubhead
 import com.sunless.lynq.ui.theme.Lynq
-import com.sunless.lynq.ui.theme.TechCodeStyle
 import com.sunless.lynq.util.asRelative
+import kotlinx.coroutines.launch
 
+/**
+ * Obsidian-Inspired Mesh Explorer Screen.
+ *
+ * Protagonist: Expansive Obsidian Knowledge Graph Canvas.
+ * - Deep dark charcoal atmosphere
+ * - Generous negative space without cluttering dashboard cards
+ * - Touch-interactive constellation with live harmonic drift
+ * - Tap node to inspect relationships and highlight connected sub-graph
+ * - Clean Apple bottom drawer for directory and transmission history
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MeshExplorerScreen(navController: NavHostController) {
     val pal = Lynq.pal
     val liveRoute = listOf("You", "Aarav", "Kabir", "Priya")
     var selectedPeerName by remember { mutableStateOf<String?>(null) }
+    var showDirectorySheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
 
     Column(modifier = Modifier.fillMaxSize()) {
+        TopBar(reachableCount = DemoData.reachableCount, title = "Mesh Graph")
+
         Column(
             modifier = Modifier
                 .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = 24.dp),
+                .padding(horizontal = 16.dp),
         ) {
-            TopBar(reachableCount = DemoData.reachableCount, title = "Mesh Graph")
-
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            // Refined Subhead
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Text(
-                    text = "Interactive Obsidian cluster topology · pinch & drag to explore",
+                    text = "Obsidian Constellation · Multi-Hop Topology",
                     style = AppleSubhead,
                     color = pal.textSecondary,
-                    modifier = Modifier.padding(bottom = 16.dp),
                 )
+            }
 
-                // Protagonist: Expansive Interactive Obsidian Knowledge Graph
+            // Protagonist: Expansive Obsidian Knowledge Graph Canvas
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            ) {
                 MeshGraph(
                     peers = DemoData.peers,
                     liveRoute = liveRoute,
-                    height = 320.dp,
                     interactive = true,
+                    selectedNodeName = selectedPeerName,
                     onNodeSelected = { selectedPeerName = it },
+                    onOpenMessage = {
+                        navController.navigateTab(Screen.Messages.route)
+                    },
                 )
+            }
 
-                Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(10.dp))
 
-                // Stats row
+            // Refined Minimalist Obsidian Cluster Status Capsule
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Color(0xF41C1C1E),
+                border = BorderStroke(0.5.dp, Color(0x33FFFFFF)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showDirectorySheet = true },
+            ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    MetricCard(
-                        value = "${DemoData.peers.count { it.hops == 1 }}",
-                        label = "Direct Links",
-                        accentColor = pal.accentBlue,
-                        icon = Icons.Rounded.WifiTethering,
-                        modifier = Modifier.weight(1f),
-                    )
-                    MetricCard(
-                        value = "${DemoData.peers.count { it.hops > 1 }}",
-                        label = "Multi-Hop",
-                        accentColor = pal.accentGreen,
-                        icon = Icons.Rounded.Hub,
-                        modifier = Modifier.weight(1f),
-                    )
-                    MetricCard(
-                        value = "6",
-                        label = "Hop Limit",
-                        accentColor = pal.textSecondary,
-                        icon = Icons.Rounded.NearMe,
-                        modifier = Modifier.weight(1f),
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .background(Color(0xFF30D158), CircleShape),
+                        )
+                        Text(
+                            text = "${DemoData.peers.size + 1} Discovered Nodes · 2 Relays · Hop Limit 6",
+                            style = AppleCaption,
+                            fontSize = 11.sp,
+                            color = pal.textSecondary,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.FormatListBulleted,
+                            contentDescription = "Directory",
+                            tint = pal.accentBlue,
+                            modifier = Modifier.size(15.dp),
+                        )
+                        Text(
+                            text = "Nodes",
+                            style = AppleCaption,
+                            color = pal.accentBlue,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
                 }
+            }
 
-                Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(8.dp))
+        }
 
-                // Discovered Nodes
+        CmdBar(
+            currentRoute = Screen.MeshExplorer.route,
+            onSelect = { navController.navigateTab(it) },
+        )
+    }
+
+    // Modal Peer Directory & Transmission History Sheet
+    if (showDirectorySheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showDirectorySheet = false },
+            sheetState = sheetState,
+            containerColor = Color(0xFF1C1C1E),
+            contentColor = pal.textPrimary,
+            dragHandle = {
+                Box(
+                    modifier = Modifier
+                        .padding(vertical = 12.dp)
+                        .size(width = 36.dp, height = 4.dp)
+                        .background(Color(0x44FFFFFF), RoundedCornerShape(2.dp)),
+                )
+            },
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 18.dp)
+                    .padding(bottom = 36.dp),
+            ) {
                 SectionHeader(
-                    title = "Discovered Nodes",
-                    actionText = "${DemoData.peers.size} Reachable",
+                    title = "Discovered Mesh Nodes",
+                    actionText = "${DemoData.peers.size} Connected",
                 )
                 Spacer(Modifier.height(10.dp))
 
                 AppleGroupedCard {
                     DemoData.peers.forEachIndexed { index, peer ->
                         if (index > 0) AppleDivider()
-                        PeerRow(peer = peer)
+                        PeerRow(peer = peer, onClick = {
+                            selectedPeerName = peer.name
+                            scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                showDirectorySheet = false
+                            }
+                        })
                     }
                 }
 
                 Spacer(Modifier.height(24.dp))
 
-                // Live Relay Packet Log
-                SectionHeader(title = "Relay Packet Log")
+                SectionHeader(title = "Recent Transmissions")
                 Spacer(Modifier.height(10.dp))
 
                 AppleGroupedCard {
@@ -160,22 +256,18 @@ fun MeshExplorerScreen(navController: NavHostController) {
                 }
             }
         }
-
-        CmdBar(
-            currentRoute = Screen.MeshExplorer.route,
-            onSelect = { navController.navigateTab(it) },
-        )
     }
 }
 
 @Composable
-private fun PeerRow(peer: Peer) {
+private fun PeerRow(peer: Peer, onClick: () -> Unit) {
     val pal = Lynq.pal
     val isDirect = peer.hops == 1
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),

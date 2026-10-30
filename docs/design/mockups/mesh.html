@@ -3,8 +3,30 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=390, height=844, initial-scale=1.0">
-<title>Lynq · Mesh Graph</title>
+<title>Lynq · Obsidian Mesh Graph</title>
 <link rel="stylesheet" href="tokens.css">
+<style>
+  .obsidian-full-canvas {
+    width: 100%;
+    height: 540px;
+    border-radius: var(--radius-xl);
+    background: radial-gradient(circle at 48% 48%, #111319 0%, #07080b 100%);
+    border: 0.5px solid rgba(255, 255, 255, 0.14);
+    position: relative;
+    overflow: hidden;
+  }
+  .obsidian-capsule-bar {
+    margin-top: 10px;
+    background: rgba(28, 28, 30, 0.94);
+    border: 0.5px solid rgba(255, 255, 255, 0.18);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+  }
+</style>
 </head>
 <body>
   <div class="app-screen">
@@ -12,175 +34,137 @@
       <h1 class="top-bar-title">Mesh Graph</h1>
       <div class="status-capsule">
         <span class="status-dot"></span>
-        <span>4 Reachable</span>
+        <span>4 Online</span>
       </div>
     </header>
 
-    <main class="content-body">
-      <div class="screen-subtitle">Interactive Obsidian cluster topology · pinch & drag to explore</div>
+    <main class="content-body" style="padding-bottom:80px;">
+      <div class="screen-subtitle">Obsidian Constellation · Multi-Hop Topology</div>
 
-      <!-- Protagonist: Obsidian Knowledge Graph -->
-      <div class="obsidian-canvas" style="height:320px;">
+      <!-- Protagonist: Expansive Obsidian Knowledge Graph Canvas -->
+      <div class="obsidian-full-canvas">
         <div class="obsidian-controls">
-          <div style="display:flex; align-items:center; gap:6px;">
-            <span style="width:6px; height:6px; border-radius:50%; background:var(--blue);"></span>
-            <span style="font-size:11px; font-weight:500; color:var(--text-secondary);">Obsidian Knowledge Graph</span>
+          <div style="display:flex; align-items:center; gap:6px; background:rgba(24, 26, 34, 0.6); padding:4px 9px; border-radius:12px; border:0.5px solid rgba(255,255,255,0.12);">
+            <span style="width:5px; height:5px; border-radius:50%; background:var(--green);"></span>
+            <span style="font-size:10.5px; font-weight:500; color:var(--text-secondary);">Obsidian Mesh · 5 Nodes</span>
           </div>
-          <span style="font-size:11px; color:var(--blue); font-weight:500; cursor:pointer;">Reset View</span>
+          <div style="width:30px; height:30px; border-radius:50%; background:rgba(24, 26, 34, 0.6); border:0.5px solid rgba(255,255,255,0.14); display:flex; align-items:center; justify-content:center; cursor:pointer;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-secondary)"><circle cx="12" cy="12" r="3"/><path d="M3 12h3m12 0h3M12 3v3m0 12v3"/></svg>
+          </div>
         </div>
 
-        <svg class="obsidian-svg" viewBox="0 0 358 320">
+        <svg class="obsidian-svg" viewBox="0 0 358 540">
           <defs>
-            <radialGradient id="halo-you" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#0A84FF" stop-opacity="0.35"/>
-              <stop offset="100%" stop-color="#0A84FF" stop-opacity="0"/>
+            <radialGradient id="halo-blue" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#4B96FF" stop-opacity="0.30"/>
+              <stop offset="100%" stop-color="#4B96FF" stop-opacity="0"/>
             </radialGradient>
-            <radialGradient id="halo-sos" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#FF453A" stop-opacity="0.45"/>
+            <radialGradient id="halo-green" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#32D74B" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#32D74B" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="halo-crimson" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#FF453A" stop-opacity="0.40"/>
               <stop offset="100%" stop-color="#FF453A" stop-opacity="0"/>
             </radialGradient>
           </defs>
 
           <!-- Cosmic Dust -->
-          <circle cx="40" cy="50" r="1.2" fill="#fff" opacity="0.1"/>
-          <circle cx="310" cy="45" r="1.4" fill="#fff" opacity="0.12"/>
-          <circle cx="280" cy="270" r="1" fill="#fff" opacity="0.08"/>
-          <circle cx="65" cy="260" r="1.2" fill="#fff" opacity="0.1"/>
-          <circle cx="180" cy="25" r="1" fill="#fff" opacity="0.08"/>
+          <circle cx="35" cy="70" r="1.1" fill="#fff" opacity="0.06"/>
+          <circle cx="320" cy="85" r="1.2" fill="#fff" opacity="0.07"/>
+          <circle cx="300" cy="460" r="1.0" fill="#fff" opacity="0.05"/>
+          <circle cx="50" cy="440" r="1.2" fill="#fff" opacity="0.06"/>
+          <circle cx="190" cy="45" r="0.9" fill="#fff" opacity="0.05"/>
+          <circle cx="260" cy="200" r="1.0" fill="#fff" opacity="0.06"/>
 
-          <!-- Filaments -->
-          <line x1="160" y1="160" x2="80" y2="100" stroke="#0A84FF" stroke-width="1.4" stroke-opacity="0.4"/>
-          <line x1="80" y1="100" x2="280" y2="200" stroke="#fff" stroke-width="1" stroke-dasharray="4 4" stroke-opacity="0.15"/>
+          <!-- Cluster 1 (Local): You (120, 275), Meera (65, 175), Aarav (190, 165) -->
+          <!-- Cluster 2 (East Sector): Kabir (275, 290), Dev (305, 185), Priya (240, 410) -->
 
-          <!-- Glowing Multi-Hop Route: You -> Aarav -> Kabir -> Priya -->
-          <line x1="160" y1="160" x2="240" y2="80" stroke="#FF453A" stroke-width="5" stroke-opacity="0.25" stroke-linecap="round"/>
-          <line x1="160" y1="160" x2="240" y2="80" stroke="#FF453A" stroke-width="2.2" stroke-linecap="round"/>
-          <circle cx="200" cy="120" r="2.8" fill="#fff"/>
+          <!-- Delicate Constellation Filaments -->
+          <line x1="120" y1="275" x2="65" y2="175" stroke="#6BA3FF" stroke-width="1.2" stroke-opacity="0.35"/>
+          <line x1="65" y1="175" x2="190" y2="165" stroke="#C7C7CC" stroke-width="0.9" stroke-dasharray="3.5 3.5" stroke-opacity="0.25"/>
+          <line x1="275" y1="290" x2="305" y2="185" stroke="#C7C7CC" stroke-width="0.9" stroke-dasharray="3.5 3.5" stroke-opacity="0.25"/>
 
-          <line x1="240" y1="80" x2="280" y2="200" stroke="#FF453A" stroke-width="5" stroke-opacity="0.25" stroke-linecap="round"/>
-          <line x1="240" y1="80" x2="280" y2="200" stroke="#FF453A" stroke-width="2.2" stroke-linecap="round"/>
-          <circle cx="260" cy="140" r="2.8" fill="#fff"/>
+          <!-- Active SOS Neural Stream: You -> Aarav -> Kabir -> Priya -->
+          <!-- You -> Aarav -->
+          <line x1="120" y1="275" x2="190" y2="165" stroke="#FF453A" stroke-width="4.0" stroke-opacity="0.20" stroke-linecap="round"/>
+          <line x1="120" y1="275" x2="190" y2="165" stroke="#FF453A" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="155" cy="220" r="2.4" fill="#fff"/>
 
-          <line x1="280" y1="200" x2="190" y2="260" stroke="#FF453A" stroke-width="5" stroke-opacity="0.25" stroke-linecap="round"/>
-          <line x1="280" y1="200" x2="190" y2="260" stroke="#FF453A" stroke-width="2.2" stroke-linecap="round"/>
+          <!-- Aarav -> Kabir (Bridge across clusters) -->
+          <line x1="190" y1="165" x2="275" y2="290" stroke="#FF453A" stroke-width="4.0" stroke-opacity="0.20" stroke-linecap="round"/>
+          <line x1="190" y1="165" x2="275" y2="290" stroke="#FF453A" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="232" cy="227" r="2.4" fill="#fff"/>
 
-          <!-- Floating Nodes with Note Labels -->
-          <!-- You -->
-          <circle cx="160" cy="160" r="20" fill="url(#halo-you)"/>
-          <circle cx="160" cy="160" r="8" fill="#000"/>
-          <circle cx="160" cy="160" r="6" fill="#0A84FF"/>
-          <circle cx="160" cy="160" r="2.4" fill="#fff"/>
-          <text x="174" y="164" fill="#fff" font-size="12" font-weight="600" font-family="-apple-system, sans-serif">You</text>
+          <!-- Kabir -> Priya -->
+          <line x1="275" y1="290" x2="240" y2="410" stroke="#FF453A" stroke-width="4.0" stroke-opacity="0.20" stroke-linecap="round"/>
+          <line x1="275" y1="290" x2="240" y2="410" stroke="#FF453A" stroke-width="1.6" stroke-linecap="round"/>
 
-          <!-- Aarav -->
-          <circle cx="240" cy="80" r="16" fill="url(#halo-sos)"/>
-          <circle cx="240" cy="80" r="7" fill="#000"/>
-          <circle cx="240" cy="80" r="5" fill="#FF453A"/>
-          <circle cx="240" cy="80" r="2" fill="#fff"/>
-          <text x="252" y="84" fill="#FF453A" font-size="11" font-weight="600" font-family="-apple-system, sans-serif">Aarav</text>
+          <!-- Celestial Nodes -->
+          <!-- You (Hub) -->
+          <circle cx="120" cy="275" r="17" fill="url(#halo-blue)"/>
+          <circle cx="120" cy="275" r="8.5" fill="#090A0D"/>
+          <circle cx="120" cy="275" r="7.2" fill="#4B96FF"/>
+          <circle cx="120" cy="275" r="2.3" fill="#fff"/>
+          <text x="133" y="279" fill="#fff" font-size="11" font-weight="600" font-family="-apple-system, sans-serif" letter-spacing="0.2px">You</text>
 
-          <!-- Meera -->
-          <circle cx="80" cy="100" r="8" fill="#000"/>
-          <circle cx="80" cy="100" r="6" fill="#30D158"/>
-          <circle cx="80" cy="100" r="2" fill="#fff"/>
-          <text x="92" y="104" fill="#FFFFFF" font-size="11" font-family="-apple-system, sans-serif">Meera</text>
+          <!-- Aarav (Relay Hub / Route) -->
+          <circle cx="190" cy="165" r="16" fill="url(#halo-crimson)"/>
+          <circle cx="190" cy="165" r="7.8" fill="#090A0D"/>
+          <circle cx="190" cy="165" r="6.2" fill="#FF453A"/>
+          <circle cx="190" cy="165" r="2.0" fill="#fff"/>
+          <text x="202" y="169" fill="#FF453A" font-size="10.5" font-weight="600" font-family="-apple-system, sans-serif">Aarav</text>
 
-          <!-- Kabir -->
-          <circle cx="280" cy="200" r="16" fill="url(#halo-sos)"/>
-          <circle cx="280" cy="200" r="7" fill="#000"/>
-          <circle cx="280" cy="200" r="5" fill="#FF453A"/>
-          <circle cx="280" cy="200" r="2" fill="#fff"/>
-          <text x="292" y="204" fill="#FF453A" font-size="11" font-weight="600" font-family="-apple-system, sans-serif">Kabir</text>
+          <!-- Meera (Relay Leaf) -->
+          <circle cx="65" cy="175" r="11" fill="url(#halo-green)"/>
+          <circle cx="65" cy="175" r="6.4" fill="#090A0D"/>
+          <circle cx="65" cy="175" r="4.8" fill="#32D74B"/>
+          <circle cx="65" cy="175" r="1.6" fill="#fff"/>
+          <text x="75" y="179" fill="#E5E5EA" font-size="10" font-family="-apple-system, sans-serif">Meera</text>
 
-          <!-- Priya -->
-          <circle cx="190" cy="260" r="16" fill="url(#halo-sos)"/>
-          <circle cx="190" cy="260" r="7" fill="#000"/>
-          <circle cx="190" cy="260" r="5" fill="#FF453A"/>
-          <circle cx="190" cy="260" r="2" fill="#fff"/>
-          <text x="202" y="264" fill="#FF453A" font-size="11" font-weight="600" font-family="-apple-system, sans-serif">Priya</text>
+          <!-- Kabir (East Hub / Route) -->
+          <circle cx="275" cy="290" r="16" fill="url(#halo-crimson)"/>
+          <circle cx="275" cy="290" r="7.8" fill="#090A0D"/>
+          <circle cx="275" cy="290" r="6.2" fill="#FF453A"/>
+          <circle cx="275" cy="290" r="2.0" fill="#fff"/>
+          <text x="287" y="294" fill="#FF453A" font-size="10.5" font-weight="600" font-family="-apple-system, sans-serif">Kabir</text>
+
+          <!-- Priya (East Leaf / Route) -->
+          <circle cx="240" cy="410" r="14" fill="url(#halo-crimson)"/>
+          <circle cx="240" cy="410" r="6.4" fill="#090A0D"/>
+          <circle cx="240" cy="410" r="4.8" fill="#FF453A"/>
+          <circle cx="240" cy="410" r="1.6" fill="#fff"/>
+          <text x="250" y="414" fill="#FF453A" font-size="10" font-weight="600" font-family="-apple-system, sans-serif">Priya</text>
+
+          <!-- Dev (East Satellite) -->
+          <circle cx="305" cy="185" r="6.4" fill="#090A0D"/>
+          <circle cx="305" cy="185" r="4.8" fill="#C7C7CC"/>
+          <circle cx="305" cy="185" r="1.6" fill="#fff"/>
+          <text x="315" y="189" fill="#8E8E93" font-size="10" font-family="-apple-system, sans-serif">Dev</text>
         </svg>
 
-        <div class="obsidian-legend">
-          <div style="display:flex; gap:12px;">
-            <span>● You</span>
-            <span style="color:var(--green)">● Relay</span>
+        <div class="obsidian-legend" style="bottom:12px; left:14px; right:14px;">
+          <div style="display:flex; gap:10px; font-size:10px;">
+            <span style="color:#4B96FF">● You</span>
+            <span style="color:#32D74B">● Relay</span>
+            <span style="color:#C7C7CC">● Peer</span>
             <span style="color:var(--red)">● SOS Path</span>
           </div>
-          <span>5 nodes total</span>
+          <span style="font-size:10px; color:rgba(255,255,255,0.35)">pinch & drag canvas</span>
         </div>
       </div>
 
-      <!-- Stats Grid -->
-      <div class="metric-grid">
-        <div class="metric-tile">
-          <div class="metric-label">Direct Links</div>
-          <div class="metric-val" style="color:var(--blue)">2</div>
+      <!-- Refined Cluster Status Capsule -->
+      <div class="obsidian-capsule-bar">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="width:6px; height:6px; border-radius:50%; background:var(--green);"></span>
+          <span style="font-size:11px; font-weight:500; color:var(--text-secondary);">5 Discovered Nodes · 2 Relays · Hop Limit 6</span>
         </div>
-        <div class="metric-tile">
-          <div class="metric-label">Multi-Hop</div>
-          <div class="metric-val" style="color:var(--green)">2</div>
-        </div>
-        <div class="metric-tile">
-          <div class="metric-label">Hop Limit</div>
-          <div class="metric-val" style="color:var(--text-secondary)">6</div>
-        </div>
-      </div>
-
-      <!-- Discovered Nodes -->
-      <div>
-        <div class="section-hdr">
-          <div class="section-hdr-title">Discovered Nodes</div>
-          <span style="font-size:13px; color:var(--text-muted);">4 Reachable</span>
-        </div>
-        <div style="height:8px;"></div>
-        <div class="apple-card">
-          <div class="apple-row">
-            <div class="avatar avatar-relay">A</div>
-            <div style="flex:1;">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-weight:600; font-size:16px;">Aarav</span>
-                <span style="font-size:12px; color:var(--blue);">Direct link</span>
-              </div>
-              <div style="font-size:13px; color:var(--text-secondary); margin-top:2px;">2b7f9c41 · Relaying active</div>
-            </div>
-          </div>
-          <div class="apple-divider"></div>
-          <div class="apple-row">
-            <div class="avatar avatar-relay">M</div>
-            <div style="flex:1;">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-weight:600; font-size:16px;">Meera</span>
-                <span style="font-size:12px; color:var(--blue);">Direct link</span>
-              </div>
-              <div style="font-size:13px; color:var(--text-secondary); margin-top:2px;">5d80e2aa · Relaying active</div>
-            </div>
-          </div>
-          <div class="apple-divider"></div>
-          <div class="apple-row">
-            <div class="avatar">K</div>
-            <div style="flex:1;">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-weight:600; font-size:16px;">Kabir</span>
-                <span style="font-size:12px; color:var(--text-muted);">2 hops</span>
-              </div>
-              <div style="font-size:13px; color:var(--text-secondary); margin-top:2px;">c14b76f3 · Relayed via Aarav</div>
-            </div>
-          </div>
-          <div class="apple-divider"></div>
-          <div class="apple-row">
-            <div class="avatar">P</div>
-            <div style="flex:1;">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-weight:600; font-size:16px;">Priya</span>
-                <span style="font-size:12px; color:var(--text-muted);">3 hops</span>
-              </div>
-              <div style="font-size:13px; color:var(--text-secondary); margin-top:2px;">8ae0d915 · Relayed via Kabir</div>
-            </div>
-          </div>
-        </div>
+        <span style="font-size:11px; font-weight:600; color:var(--blue);">Nodes ▾</span>
       </div>
     </main>
 
+    <!-- Apple Floating Rounded Navigation Bar (Equal-sized tabs) -->
     <nav class="apple-tab-bar">
       <a class="tab-item" href="dashboard.html">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>

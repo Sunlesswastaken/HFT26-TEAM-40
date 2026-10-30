@@ -364,46 +364,60 @@ body {
   font-weight: 600;
 }
 
-/* Apple Tab Bar */
+/* Apple Floating Rounded Navigation Bar */
 .apple-tab-bar {
   position: fixed;
-  bottom: 0;
+  bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
-  width: 390px;
-  height: 64px;
-  background: rgba(18, 18, 20, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 0.5px solid var(--border);
+  width: calc(390px - 32px);
+  max-width: 358px;
+  height: 60px;
+  background: rgba(28, 28, 30, 0.94);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 0.5px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   align-items: center;
   padding: 0 4px;
   z-index: 100;
 }
 
 .tab-item {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  justify-content: center;
+  gap: 2px;
   text-decoration: none;
   color: var(--text-secondary);
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 500;
-  padding: 6px 12px;
+  padding: 6px 0;
+  margin: 0 2px;
+  border-radius: var(--radius-pill);
+  transition: all 0.2s ease;
 }
 
 .tab-item.active {
   color: var(--blue);
+  background: rgba(10, 132, 255, 0.15);
 }
 
 .tab-item.tab-sos {
   color: var(--red);
 }
 
+.tab-item.tab-sos.active {
+  color: var(--red);
+  background: rgba(255, 69, 58, 0.20);
+}
+
 .tab-item svg {
-  width: 22px;
-  height: 22px;
+  width: 21px;
+  height: 21px;
 }

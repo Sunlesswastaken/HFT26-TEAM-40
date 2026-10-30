@@ -1,6 +1,8 @@
 package com.sunless.lynq.ui.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -29,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -46,9 +49,13 @@ private data class NavItemSpec(
 )
 
 /**
- * Apple Minimalist Bottom Navigation Bar.
- * Clean iOS tab bar styling with frosted background, subtle hairline border,
- * SF-style vector glyphs, and high-visibility SOS tab.
+ * Apple Floating Rounded Island Navigation Bar (Capsule Dock).
+ *
+ * Clean detached pill dock:
+ * - Rounded capsule shape (32dp continuous curvature)
+ * - Translucent Apple secondary dark surface with subtle hairline border
+ * - Smooth animated pill highlight for active tab
+ * - Dedicated high-visibility SOS emergency pill
  */
 @Composable
 fun CmdBar(
@@ -65,77 +72,86 @@ fun CmdBar(
         NavItemSpec("Settings", Icons.Rounded.Settings, Screen.Settings.route),
     )
 
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = Color(0xFF121214),
-        border = BorderStroke(0.5.dp, pal.border),
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, bottom = 8.dp, top = 2.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically,
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(32.dp),
+            color = Color(0xF41C1C1E), // Frosted Apple Secondary Background (95% opaque)
+            border = BorderStroke(0.5.dp, Color(0x33FFFFFF)), // Apple delicate hairline
+            shadowElevation = 14.dp,
         ) {
-            items.forEach { item ->
-                val active = item.route == currentRoute
-                val interactionSource = remember { MutableInteractionSource() }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 6.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                items.forEach { item ->
+                    val active = item.route == currentRoute
+                    val interactionSource = remember { MutableInteractionSource() }
 
-                val itemColor by animateColorAsState(
-                    targetValue = when {
-                        item.isEmergency && active -> pal.emergencyRed
-                        item.isEmergency -> pal.emergencyRed.copy(alpha = 0.85f)
-                        active -> pal.accentBlue
-                        else -> pal.textSecondary
-                    },
-                    label = "tabColor",
-                )
+                    val itemColor by animateColorAsState(
+                        targetValue = when {
+                            item.isEmergency && active -> pal.emergencyRed
+                            item.isEmergency -> pal.emergencyRed.copy(alpha = 0.85f)
+                            active -> pal.accentBlue
+                            else -> pal.textSecondary
+                        },
+                        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+                        label = "tabColor",
+                    )
 
-                Column(
-                    modifier = Modifier
-                        .clickable(
-                            interactionSource = interactionSource,
-                            indication = null,
-                            onClick = { onSelect(item.route) },
-                        )
-                        .padding(horizontal = 8.dp, vertical = 2.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    if (item.isEmergency) {
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .background(
-                                    if (active) pal.emergencyRed.copy(alpha = 0.2f) else Color.Transparent,
-                                    CircleShape,
-                                ),
-                            contentAlignment = Alignment.Center,
+                    val pillBg by animateColorAsState(
+                        targetValue = when {
+                            item.isEmergency && active -> pal.emergencyRed.copy(alpha = 0.22f)
+                            active -> pal.accentBlue.copy(alpha = 0.16f)
+                            else -> Color.Transparent
+                        },
+                        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+                        label = "pillBg",
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 2.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(pillBg)
+                            .clickable(
+                                interactionSource = interactionSource,
+                                indication = null,
+                                onClick = { onSelect(item.route) },
+                            )
+                            .padding(vertical = 6.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
                         ) {
                             Icon(
                                 imageVector = item.icon,
                                 contentDescription = item.label,
                                 tint = itemColor,
-                                modifier = Modifier.size(22.dp),
+                                modifier = Modifier.size(21.dp),
+                            )
+                            Text(
+                                text = item.label,
+                                color = itemColor,
+                                style = AppleCaption,
+                                fontSize = 10.sp,
+                                fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
+                                maxLines = 1,
+                                modifier = Modifier.padding(top = 2.dp),
                             )
                         }
-                    } else {
-                        Icon(
-                            imageVector = item.icon,
-                            contentDescription = item.label,
-                            tint = itemColor,
-                            modifier = Modifier.size(22.dp),
-                        )
                     }
-
-                    Text(
-                        text = item.label,
-                        color = itemColor,
-                        style = AppleCaption,
-                        fontSize = 10.sp,
-                        fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
-                        modifier = Modifier.padding(top = 2.dp),
-                    )
                 }
             }
         }
