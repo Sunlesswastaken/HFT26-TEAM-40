@@ -694,12 +694,25 @@ fun MeshGraph(
 
 /**
  * Calculates organic cluster distribution with subtle harmonic physics drift.
+ * Preserves the exact aspect ratio of the constellation across both wide (Dashboard)
+ * and tall (MeshExplorer) canvases, eliminating vertical stretching and lateral squishing.
  */
 private fun computeObsidianPositions(w: Float, h: Float, floatTime: Float): Map<String, Offset> {
     val cx = w * 0.48f
     val cy = h * 0.48f
 
-    // Harmonic drifts
+    // In wide/landscape cards (DashboardScreen), aspect ratio is ~1.55 (w ≈ 358, h = 230).
+    // In tall portrait screens (MeshExplorerScreen), h is 500-600+, which previously
+    // stretched Y by ~2.4x while keeping X fixed, causing the constellation to look squished.
+    // By anchoring vertical spread to the natural constellation aspect ratio,
+    // the graph retains its signature celestial beauty across all container sizes.
+    val isTallScreen = h > w * 1.15f
+    val scaleFactor = if (isTallScreen) 1.20f else 1.0f
+
+    val effectiveH = minOf(h, w * 0.642f) * scaleFactor
+    val effectiveW = minOf(w, h * 1.55f) * scaleFactor
+
+    // Harmonic drifts (Brownian motion)
     val d0 = Offset(sin(floatTime) * 2.5f, cos(floatTime) * 2.0f)
     val d1 = Offset(cos(floatTime * 0.85f) * 3.2f, sin(floatTime * 0.85f) * 2.5f)
     val d2 = Offset(-sin(floatTime * 1.05f) * 2.8f, cos(floatTime * 1.05f) * 2.8f)
@@ -708,14 +721,14 @@ private fun computeObsidianPositions(w: Float, h: Float, floatTime: Float): Map<
     val d5 = Offset(sin(floatTime * 0.75f) * 3.0f, cos(floatTime * 0.75f) * 2.2f)
 
     // Cluster 1 (Local): You (center-left), Meera (upper-left), Aarav (bridge-center)
-    val youPos = Offset(cx - w * 0.16f, cy + h * 0.04f) + d0
-    val meeraPos = Offset(cx - w * 0.32f, cy - h * 0.18f) + d2
-    val aaravPos = Offset(cx + w * 0.04f, cy - h * 0.20f) + d1
+    val youPos = Offset(cx - effectiveW * 0.16f, cy + effectiveH * 0.04f) + d0
+    val meeraPos = Offset(cx - effectiveW * 0.32f, cy - effectiveH * 0.18f) + d2
+    val aaravPos = Offset(cx + effectiveW * 0.04f, cy - effectiveH * 0.20f) + d1
 
     // Cluster 2 (East Sector): Kabir (center-right hub), Priya (lower-right), Dev (upper-right)
-    val kabirPos = Offset(cx + w * 0.28f, cy + h * 0.08f) + d3
-    val priyaPos = Offset(cx + w * 0.18f, cy + h * 0.30f) + d4
-    val devPos = Offset(cx + w * 0.36f, cy - h * 0.16f) + d5
+    val kabirPos = Offset(cx + effectiveW * 0.28f, cy + effectiveH * 0.08f) + d3
+    val priyaPos = Offset(cx + effectiveW * 0.18f, cy + effectiveH * 0.30f) + d4
+    val devPos = Offset(cx + effectiveW * 0.36f, cy - effectiveH * 0.16f) + d5
 
     return mapOf(
         "You" to youPos,
