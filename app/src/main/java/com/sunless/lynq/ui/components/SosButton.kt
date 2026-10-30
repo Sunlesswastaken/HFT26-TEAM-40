@@ -60,10 +60,19 @@ import com.sunless.lynq.ui.theme.AppleHeadline
 import com.sunless.lynq.ui.theme.AppleSubhead
 import com.sunless.lynq.ui.theme.Lynq
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+
 /**
  * 3-Second Hold-to-Confirm Emergency SOS Button.
  * Requires user to continuously press and hold for 3 seconds to prevent accidental sends.
- * Features an animated progress fill, live countdown, haptic cues, and Apple satellite aesthetic.
+ * Features an animated circular arc, horizontal radiant fill, bottom charging bar, and press compression.
  */
 @Composable
 fun HoldToSosButton(
@@ -77,22 +86,36 @@ fun HoldToSosButton(
     val progress = remember { Animatable(0f) }
     var isHolding by remember { mutableStateOf(false) }
 
+    val scale by animateFloatAsState(
+        targetValue = if (isHolding) 0.965f else 1f,
+        animationSpec = spring(
+            dampingRatio = 0.75f,
+            stiffness = Spring.StiffnessMediumLow,
+        ),
+        label = "sosButtonScale",
+    )
+
     val transition = rememberInfiniteTransition(label = "holdSosPulse")
     val pulseAlpha by transition.animateFloat(
-        initialValue = 0.2f,
-        targetValue = 0.6f,
+        initialValue = 0.3f,
+        targetValue = 0.7f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutSlowInEasing),
+            animation = tween(900, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse,
         ),
         label = "pulseAlpha",
     )
 
-    val currentSecondsLeft = (kotlin.math.ceil((1f - progress.value) * (holdDurationMillis / 1000f))).toInt().coerceAtLeast(1)
+    val percent = (progress.value * 100).toInt()
+    val secondsRemaining = ((1f - progress.value) * (holdDurationMillis / 1000f)).coerceAtLeast(0f)
 
     Surface(
         modifier = modifier
             .fillMaxWidth()
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(RoundedCornerShape(20.dp))
             .pointerInput(Unit) {
                 detectTapGestures(
@@ -107,7 +130,7 @@ fun HoldToSosButton(
                                     easing = LinearEasing,
                                 ),
                             )
-                            // Reached 3 full seconds! Trigger SOS
+                            // 3 full seconds reached! Trigger SOS
                             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                             onHoldComplete()
                             progress.snapTo(0f)
@@ -119,7 +142,7 @@ fun HoldToSosButton(
                             job.cancel()
                             isHolding = false
                             scope.launch {
-                                progress.animateTo(0f, tween(250, easing = FastOutSlowInEasing))
+                                progress.animateTo(0f, tween(200, easing = FastOutSlowInEasing))
                             }
                         }
                     },
@@ -127,54 +150,130 @@ fun HoldToSosButton(
             },
         shape = RoundedCornerShape(20.dp),
         color = pal.emergencyRed,
-        border = BorderStroke(1.dp, if (isHolding) Color.White.copy(alpha = 0.6f) else pal.emergencyRed),
+        border = BorderStroke(
+            width = if (isHolding) 1.5.dp else 1.dp,
+            color = if (isHolding) Color.White.copy(alpha = pulseAlpha) else pal.emergencyRed,
+        ),
+        shadowElevation = if (isHolding) 10.dp else 4.dp,
     ) {
         Box(
             modifier = Modifier.fillMaxWidth(),
         ) {
-            // Animated Progress Fill (Left to Right)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(fraction = progress.value)
-                    .matchParentSize()
-                    .background(Color.White.copy(alpha = 0.25f)),
-            )
+            // 1. Radiant Background Progress Fill (Left to Right)
+            if (progress.value > 0f) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(fraction = progress.value)
+                        .matchParentSize()
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(
+                                    Color.White.copy(alpha = 0.16f),
+                                    Color.White.copy(alpha = 0.35f),
+                                ),
+                            ),
+                        ),
+                )
+            }
 
-            Column(
+            // 2. Button Content (Circular Arc + Typography)
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 18.dp, horizontal = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                    .padding(vertical = 16.dp, horizontal = 18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                // Tactile Circular 360-degree countdown arc
+                Box(
+                    modifier = Modifier.size(44.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
+                    Canvas(modifier = Modifier.matchParentSize()) {
+                        val strokeWidth = 3.dp.toPx()
+                        // Inactive background track
+                        drawCircle(
+                            color = Color.White.copy(alpha = if (isHolding) 0.30f else 0.18f),
+                            style = Stroke(width = strokeWidth),
+                        )
+                        // Active charging arc
+                        if (progress.value > 0f) {
+                            drawArc(
+                                color = Color.White,
+                                startAngle = -90f,
+                                sweepAngle = progress.value * 360f,
+                                useCenter = false,
+                                style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
+                            )
+                        }
+                    }
+
                     Icon(
                         imageVector = Icons.Rounded.Emergency,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier
-                            .size(22.dp)
-                            .border(
-                                width = if (isHolding) 2.dp else 0.dp,
-                                color = Color.White.copy(alpha = pulseAlpha),
-                                shape = CircleShape,
-                            ),
-                    )
-                    Text(
-                        text = if (isHolding) "Hold for SOS (${currentSecondsLeft}s)" else "Hold 3s for Emergency SOS",
-                        style = AppleHeadline,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
+                        modifier = Modifier.size(22.dp),
                     )
                 }
-                Spacer(Modifier.height(3.dp))
-                Text(
-                    text = if (isHolding) "Keep holding… Release to cancel" else "Press and hold 3 seconds to broadcast alert",
-                    style = AppleCaption,
-                    color = Color.White.copy(alpha = 0.85f),
-                )
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = if (isHolding) "Hold for SOS" else "Hold 3s for SOS",
+                            style = AppleHeadline,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                        )
+
+                        if (isHolding) {
+                            Surface(
+                                shape = RoundedCornerShape(100.dp),
+                                color = Color.White.copy(alpha = 0.25f),
+                            ) {
+                                Text(
+                                    text = "$percent%",
+                                    style = AppleCaption,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = if (isHolding) {
+                            "Release to cancel · %.1fs remaining".format(secondsRemaining)
+                        } else {
+                            "Press and hold to broadcast across offline mesh"
+                        },
+                        style = AppleFootnote,
+                        color = Color.White.copy(alpha = 0.88f),
+                    )
+                }
+            }
+
+            // 3. Crisp High-Contrast Bottom Charging Bar
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.5.dp)
+                    .align(Alignment.BottomCenter)
+                    .background(Color.Black.copy(alpha = 0.22f)),
+            ) {
+                if (progress.value > 0f) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(fraction = progress.value)
+                            .fillMaxHeight()
+                            .background(Color.White),
+                    )
+                }
             }
         }
     }
