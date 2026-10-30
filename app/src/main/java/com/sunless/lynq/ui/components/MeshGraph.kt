@@ -437,21 +437,14 @@ fun MeshGraph(
                         // Crisp Deep Charcoal Rim (Separation backing)
                         drawCircle(
                             color = Color(0xFF090A0D),
-                            radius = baseRadius + 1.6.dp.toPx(),
+                            radius = baseRadius + 1.4.dp.toPx(),
                             center = node.pos,
                         )
 
-                        // Solid Core Celestial Disk
+                        // Solid Core Celestial Disk (Pure solid color)
                         drawCircle(
                             color = baseColor.copy(alpha = nodeOpacity),
                             radius = baseRadius,
-                            center = node.pos,
-                        )
-
-                        // Center Luminous Pip (Star nucleus)
-                        drawCircle(
-                            color = Color.White.copy(alpha = 0.85f * nodeOpacity),
-                            radius = baseRadius * 0.32f,
                             center = node.pos,
                         )
 

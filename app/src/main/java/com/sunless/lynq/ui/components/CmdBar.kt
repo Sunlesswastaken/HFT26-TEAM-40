@@ -2,20 +2,24 @@ package com.sunless.lynq.ui.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChatBubbleOutline
@@ -28,12 +32,17 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,13 +58,16 @@ private data class NavItemSpec(
 )
 
 /**
- * Apple Floating Rounded Island Navigation Bar (Capsule Dock).
+ * Apple Floating Rounded Island Navigation Bar (Interactive Sliding Dock).
  *
- * Clean detached pill dock:
- * - Rounded capsule shape (32dp continuous curvature)
- * - Translucent Apple secondary dark surface with subtle hairline border
- * - Smooth animated pill highlight for active tab
- * - Dedicated high-visibility SOS emergency pill
+ * Features:
+ * - Fluid finger-scrub gesture: sliding your finger continuously across the dock
+ *   smoothly drives the glowing indicator pill along the track with tactile haptic ticks.
+ * - When released, automatically commits and switches to the destination screen.
+ * - Tap support: 1-tap instantly springs the sliding pill to the target tab and navigates.
+ * - Equal-sized uniform slots across all 5 navigation destinations.
+ * - Adaptive pill color: morphs to emergency crimson when hovering over SOS,
+ *   and Apple celestial blue for Network/Messages/Mesh/Settings.
  */
 @Composable
 fun CmdBar(
@@ -64,13 +76,21 @@ fun CmdBar(
     onSelect: (String) -> Unit,
 ) {
     val pal = Lynq.pal
-    val items = listOf(
-        NavItemSpec("Network", Icons.Rounded.Sensors, Screen.Dashboard.route),
-        NavItemSpec("Messages", Icons.Rounded.ChatBubbleOutline, Screen.Messages.route),
-        NavItemSpec("SOS", Icons.Rounded.Emergency, Screen.Emergency.route, isEmergency = true),
-        NavItemSpec("Mesh", Icons.Rounded.Hub, Screen.MeshExplorer.route),
-        NavItemSpec("Settings", Icons.Rounded.Settings, Screen.Settings.route),
-    )
+    val haptics = LocalHapticFeedback.current
+
+    val items = remember {
+        listOf(
+            NavItemSpec("Network", Icons.Rounded.Sensors, Screen.Dashboard.route),
+            NavItemSpec("Messages", Icons.Rounded.ChatBubbleOutline, Screen.Messages.route),
+            NavItemSpec("SOS", Icons.Rounded.Emergency, Screen.Emergency.route, isEmergency = true),
+            NavItemSpec("Mesh", Icons.Rounded.Hub, Screen.MeshExplorer.route),
+            NavItemSpec("Settings", Icons.Rounded.Settings, Screen.Settings.route),
+        )
+    }
+
+    val committedIndex = items.indexOfFirst { it.route == currentRoute }.coerceAtLeast(0)
+    var draggingIndex by remember { mutableStateOf<Int?>(null) }
+    val visualIndex = draggingIndex ?: committedIndex
 
     Box(
         modifier = modifier
@@ -79,77 +99,140 @@ fun CmdBar(
         contentAlignment = Alignment.Center,
     ) {
         Surface(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .pointerInput(currentRoute) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val down = awaitFirstDown(requireUnconsumed = false)
+                            val barWidth = size.width.toFloat()
+                            fun getIndexFromX(x: Float): Int {
+                                val fraction = (x / barWidth).coerceIn(0f, 0.999f)
+                                return (fraction * items.size).toInt().coerceIn(0, items.size - 1)
+                            }
+
+                            var activeIdx = getIndexFromX(down.position.x)
+                            draggingIndex = activeIdx
+                            haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+
+                            val pointerId = down.id
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                val change = event.changes.firstOrNull { it.id == pointerId }
+                                if (change == null || !change.pressed) {
+                                    // Touch released: commit navigation to the destination tab
+                                    val finalRoute = items[activeIdx].route
+                                    draggingIndex = null
+                                    if (finalRoute != currentRoute) {
+                                        onSelect(finalRoute)
+                                    }
+                                    break
+                                }
+
+                                val newIdx = getIndexFromX(change.position.x)
+                                if (newIdx != activeIdx) {
+                                    activeIdx = newIdx
+                                    draggingIndex = newIdx
+                                    haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                }
+                                change.consume()
+                            }
+                        }
+                    }
+                },
             shape = RoundedCornerShape(32.dp),
             color = Color(0xF41C1C1E), // Frosted Apple Secondary Background (95% opaque)
             border = BorderStroke(0.5.dp, Color(0x33FFFFFF)), // Apple delicate hairline
             shadowElevation = 14.dp,
         ) {
-            Row(
+            BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 6.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+                    .padding(horizontal = 6.dp, vertical = 5.dp),
             ) {
-                items.forEach { item ->
-                    val active = item.route == currentRoute
-                    val interactionSource = remember { MutableInteractionSource() }
+                val totalWidth = maxWidth
+                val tabWidth = totalWidth / items.size
 
-                    val itemColor by animateColorAsState(
-                        targetValue = when {
-                            item.isEmergency && active -> pal.emergencyRed
-                            item.isEmergency -> pal.emergencyRed.copy(alpha = 0.85f)
-                            active -> pal.accentBlue
-                            else -> pal.textSecondary
-                        },
-                        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
-                        label = "tabColor",
-                    )
+                // Smooth organic spring animation for sliding indicator pill
+                val animatedIndex by animateFloatAsState(
+                    targetValue = visualIndex.toFloat(),
+                    animationSpec = spring(
+                        dampingRatio = 0.82f,
+                        stiffness = 500f,
+                    ),
+                    label = "slidingPillPosition",
+                )
 
-                    val pillBg by animateColorAsState(
-                        targetValue = when {
-                            item.isEmergency && active -> pal.emergencyRed.copy(alpha = 0.22f)
-                            active -> pal.accentBlue.copy(alpha = 0.16f)
-                            else -> Color.Transparent
-                        },
-                        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
-                        label = "pillBg",
-                    )
+                // Smooth morphing pill background color
+                val currentVisualItem = items[visualIndex]
+                val pillColor by animateColorAsState(
+                    targetValue = if (currentVisualItem.isEmergency) {
+                        pal.emergencyRed.copy(alpha = 0.22f)
+                    } else {
+                        pal.accentBlue.copy(alpha = 0.16f)
+                    },
+                    animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing),
+                    label = "pillColorMorph",
+                )
 
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 2.dp)
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(pillBg)
-                            .clickable(
-                                interactionSource = interactionSource,
-                                indication = null,
-                                onClick = { onSelect(item.route) },
-                            )
-                            .padding(vertical = 6.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
+                // 1. Sliding Pill Background Indicator
+                Box(
+                    modifier = Modifier
+                        .offset(x = tabWidth * animatedIndex)
+                        .width(tabWidth)
+                        .padding(horizontal = 2.dp)
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(pillColor),
+                )
+
+                // 2. Navigation Tab Icons & Labels Row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    items.forEachIndexed { index, item ->
+                        val isSelected = index == visualIndex
+
+                        val itemColor by animateColorAsState(
+                            targetValue = when {
+                                item.isEmergency && isSelected -> pal.emergencyRed
+                                item.isEmergency -> pal.emergencyRed.copy(alpha = 0.85f)
+                                isSelected -> pal.accentBlue
+                                else -> pal.textSecondary
+                            },
+                            animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing),
+                            label = "tabColor_$index",
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(horizontal = 2.dp)
+                                .height(48.dp),
+                            contentAlignment = Alignment.Center,
                         ) {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = item.label,
-                                tint = itemColor,
-                                modifier = Modifier.size(21.dp),
-                            )
-                            Text(
-                                text = item.label,
-                                color = itemColor,
-                                style = AppleCaption,
-                                fontSize = 10.sp,
-                                fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
-                                maxLines = 1,
-                                modifier = Modifier.padding(top = 2.dp),
-                            )
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = item.label,
+                                    tint = itemColor,
+                                    modifier = Modifier.size(21.dp),
+                                )
+                                Text(
+                                    text = item.label,
+                                    color = itemColor,
+                                    style = AppleCaption,
+                                    fontSize = 10.sp,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                    maxLines = 1,
+                                    modifier = Modifier.padding(top = 2.dp),
+                                )
+                            }
                         }
                     }
                 }
