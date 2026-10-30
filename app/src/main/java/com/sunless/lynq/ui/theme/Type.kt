@@ -13,6 +13,10 @@ import com.sunless.lynq.R
  * - Silkscreen (pixel bold) = identity: titles, buttons, tags, readouts, names
  * - JetBrains Mono = reading + data: bodies, IDs, timestamps, hops
  * - VT323 = CRT flavor only: boot log, ASCII topology art
+ *
+ * Sizing note: Silkscreen and VT323 fill their em box much more than Roboto,
+ * so their sp values run lower than typical Material sizes. Values below were
+ * checked on a real device (Samsung A069, ~410dpi).
  */
 val PixelFont = FontFamily(
     Font(R.font.silkscreen_bold, FontWeight.Bold),
@@ -29,63 +33,63 @@ val TerminalFont = FontFamily(
 
 val LynqTypography = Typography(
     // ---- pixel tier: identity ----
-    displaySmall = TextStyle(          // big readouts (34px pixel)
+    displaySmall = TextStyle(          // big readouts
         fontFamily = PixelFont,
         fontWeight = FontWeight.Bold,
-        fontSize = 32.sp,
-        lineHeight = 34.sp,
+        fontSize = 26.sp,              // pixel fonts run "big" — keep modest
+        lineHeight = 28.sp,
     ),
     headlineMedium = TextStyle(        // screen titles
         fontFamily = PixelFont,
         fontWeight = FontWeight.Bold,
-        fontSize = 21.sp,
-        lineHeight = 28.sp,
+        fontSize = 17.sp,
+        lineHeight = 24.sp,
         letterSpacing = 0.5.sp,
     ),
     titleMedium = TextStyle(           // names — people are headings, stay pixel
         fontFamily = PixelFont,
         fontWeight = FontWeight.Bold,
-        fontSize = 13.sp,
-        lineHeight = 18.sp,
-        letterSpacing = 0.5.sp,
+        fontSize = 11.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.4.sp,
     ),
-    labelSmall = TextStyle(             // tags, status chips, section heads
+    labelSmall = TextStyle(            // tags, chips, section heads
         fontFamily = PixelFont,
         fontWeight = FontWeight.Bold,
-        fontSize = 10.sp,
-        lineHeight = 14.sp,
-        letterSpacing = 1.sp,
+        fontSize = 8.5.sp,
+        lineHeight = 12.sp,
+        letterSpacing = 0.8.sp,
     ),
     // ---- mono tier: reading + data ----
     bodyLarge = TextStyle(              // message bodies
         fontFamily = MonoFont,
         fontWeight = FontWeight.Normal,
-        fontSize = 15.sp,
-        lineHeight = 22.sp,
+        fontSize = 13.sp,
+        lineHeight = 19.sp,
     ),
-    bodyMedium = TextStyle(             // previews, notes, descriptions
+    bodyMedium = TextStyle(             // previews, notes
         fontFamily = MonoFont,
         fontWeight = FontWeight.Normal,
-        fontSize = 13.5.sp,
-        lineHeight = 20.sp,
+        fontSize = 12.sp,
+        lineHeight = 17.sp,
     ),
     bodySmall = TextStyle(              // readable meta
         fontFamily = MonoFont,
         fontWeight = FontWeight.Normal,
-        fontSize = 12.5.sp,
-        lineHeight = 17.sp,
+        fontSize = 11.sp,
+        lineHeight = 15.sp,
     ),
-    labelLarge = TextStyle(             // buttons already pixel via .pix styles; this is mono buttons
+    labelLarge = TextStyle(             // mono buttons / meter
         fontFamily = MonoFont,
         fontWeight = FontWeight.Bold,
-        fontSize = 14.sp,
-        lineHeight = 18.sp,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
     ),
     labelMedium = TextStyle(            // ids, timestamps, hop counts
         fontFamily = MonoFont,
         fontWeight = FontWeight.Normal,
-        fontSize = 12.sp,
-        lineHeight = 16.sp,
+        fontSize = 10.5.sp,
+        lineHeight = 14.sp,
     ),
 )
 
@@ -93,15 +97,15 @@ val LynqTypography = Typography(
 val TerminalStyle = TextStyle(
     fontFamily = TerminalFont,
     fontWeight = FontWeight.Normal,
-    fontSize = 16.sp,
-    lineHeight = 24.sp,
+    fontSize = 14.sp,
+    lineHeight = 19.sp,
 )
 
 /** Pixel route trace: YOU > AARAV > KABIR */
 val RouteStyle = TextStyle(
     fontFamily = PixelFont,
     fontWeight = FontWeight.Bold,
-    fontSize = 10.sp,
-    lineHeight = 14.sp,
-    letterSpacing = 0.5.sp,
+    fontSize = 9.sp,
+    lineHeight = 13.sp,
+    letterSpacing = 0.3.sp,
 )

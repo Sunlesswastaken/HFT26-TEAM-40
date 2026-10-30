@@ -37,6 +37,7 @@ import com.sunless.lynq.ui.components.SysBar
 import com.sunless.lynq.ui.components.Tag
 import com.sunless.lynq.ui.components.TagTone
 import com.sunless.lynq.ui.navigation.Screen
+import com.sunless.lynq.ui.navigation.navigateTab
 import com.sunless.lynq.ui.theme.Lynq
 import com.sunless.lynq.util.asClock
 import com.sunless.lynq.util.asRelative
@@ -44,6 +45,11 @@ import com.sunless.lynq.util.asRelative
 @Composable
 fun MessagesScreen(navController: NavHostController) {
     var openId by remember { mutableStateOf<String?>(null) }
+
+    // System back gesture closes the open thread instead of leaving the app.
+    androidx.activity.compose.BackHandler(enabled = openId != null) {
+        openId = null
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -60,7 +66,7 @@ fun MessagesScreen(navController: NavHostController) {
         }
         CmdBar(
             currentRoute = Screen.Messages.route,
-            onSelect = { navController.navigate(it) },
+            onSelect = { navController.navigateTab(it) },
         )
     }
 }

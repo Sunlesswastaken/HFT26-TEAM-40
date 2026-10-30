@@ -37,6 +37,7 @@ import com.sunless.lynq.ui.components.SysBar
 import com.sunless.lynq.ui.components.Tag
 import com.sunless.lynq.ui.components.TagTone
 import com.sunless.lynq.ui.navigation.Screen
+import com.sunless.lynq.ui.navigation.navigateTab
 import com.sunless.lynq.ui.theme.Lynq
 import com.sunless.lynq.ui.theme.TerminalStyle
 import com.sunless.lynq.util.asRelative
@@ -142,7 +143,7 @@ fun DashboardScreen(navController: NavHostController) {
 
                 // quick SOS
                 SosLever(
-                    onClick = { navController.navigate(Screen.Emergency.route) },
+                    onClick = { navController.navigateTab(Screen.Emergency.route) },
                     modifier = Modifier.padding(top = 26.dp),
                 )
             }
@@ -150,7 +151,7 @@ fun DashboardScreen(navController: NavHostController) {
 
         CmdBar(
             currentRoute = Screen.Dashboard.route,
-            onSelect = { navController.navigate(it) },
+            onSelect = { navController.navigateTab(it) },
         )
     }
 }

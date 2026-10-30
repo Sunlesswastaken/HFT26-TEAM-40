@@ -285,7 +285,7 @@ fun SysBar(
             style = androidx.compose.ui.text.TextStyle(
                 fontFamily = com.sunless.lynq.ui.theme.PixelFont,
                 fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                fontSize = 24.sp,
+                fontSize = 20.sp,
                 letterSpacing = 1.sp,
             ),
             color = pal.ph,

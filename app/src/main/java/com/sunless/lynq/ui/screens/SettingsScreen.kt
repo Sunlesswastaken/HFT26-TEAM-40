@@ -30,6 +30,7 @@ import com.sunless.lynq.ui.components.SysBar
 import com.sunless.lynq.ui.components.Tag
 import com.sunless.lynq.ui.components.TagTone
 import com.sunless.lynq.ui.navigation.Screen
+import com.sunless.lynq.ui.navigation.navigateTab
 import com.sunless.lynq.ui.theme.Lynq
 
 @Composable
@@ -60,7 +61,7 @@ fun SettingsScreen(navController: NavHostController) {
                     Text(
                         text = DemoData.MY_NAME.uppercase(),
                         style = MaterialTheme.typography.displaySmall,
-                        fontSize = 24.sp,
+                        fontSize = 18.sp,
                     )
                     Text(
                         text = "${DemoData.MY_DEVICE} · key verified",
@@ -141,7 +142,7 @@ fun SettingsScreen(navController: NavHostController) {
 
         CmdBar(
             currentRoute = Screen.Settings.route,
-            onSelect = { navController.navigate(it) },
+            onSelect = { navController.navigateTab(it) },
         )
     }
 }

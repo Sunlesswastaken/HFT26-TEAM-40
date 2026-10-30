@@ -41,6 +41,7 @@ import com.sunless.lynq.ui.components.SysBar
 import com.sunless.lynq.ui.components.Tag
 import com.sunless.lynq.ui.components.TagTone
 import com.sunless.lynq.ui.navigation.Screen
+import com.sunless.lynq.ui.navigation.navigateTab
 import com.sunless.lynq.ui.theme.Lynq
 import com.sunless.lynq.util.asClock
 import com.sunless.lynq.util.asRelative
@@ -54,6 +55,11 @@ fun EmergencyScreen(navController: NavHostController) {
     var note by rememberSaveable { mutableStateOf("") }
     var shareLocation by rememberSaveable { mutableStateOf(true) }
     var sending by rememberSaveable { mutableStateOf(false) }
+
+    // System back gesture returns from live tracking to the compose view.
+    androidx.activity.compose.BackHandler(enabled = sending) {
+        sending = false
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -172,7 +178,7 @@ fun EmergencyScreen(navController: NavHostController) {
 
         CmdBar(
             currentRoute = Screen.Emergency.route,
-            onSelect = { navController.navigate(it) },
+            onSelect = { navController.navigateTab(it) },
         )
     }
 }
