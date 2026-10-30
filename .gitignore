@@ -32,3 +32,4 @@ pip-log.txt
 *.keystore
 keystore.properties
 shots/
+docs/
