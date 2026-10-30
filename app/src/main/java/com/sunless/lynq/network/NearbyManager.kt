@@ -50,6 +50,7 @@ class NearbyManager(
         val endpointId: String,
         val peerId: String,
         val peerName: String,
+        val connectedAt: Long = System.currentTimeMillis(),
     )
 
     private val connectedEndpoints = ConcurrentHashMap<String, ConnectedEndpoint>()
@@ -234,16 +235,23 @@ class NearbyManager(
             endpointId = endpointId,
             peerId = peerId,
             peerName = peerName,
+            connectedAt = System.currentTimeMillis(),
         )
         connectedEndpoints[endpointId] = endpoint
         updatePeersList()
     }
 
     fun updateEndpointIdentity(endpointId: String, peerId: String, peerName: String) {
+        val existing = connectedEndpoints[endpointId]
+        if (existing != null && existing.peerId == peerId && existing.peerName == peerName) {
+            return // Identity already known, avoid duplicate emissions
+        }
+        val connectedAt = existing?.connectedAt ?: System.currentTimeMillis()
         connectedEndpoints[endpointId] = ConnectedEndpoint(
             endpointId = endpointId,
             peerId = peerId,
             peerName = peerName,
+            connectedAt = connectedAt,
         )
         updatePeersList()
     }
@@ -261,9 +269,9 @@ class NearbyManager(
                 name = it.peerName,
                 connected = true,
                 hops = 1,
-                lastSeen = System.currentTimeMillis(),
+                lastSeen = it.connectedAt,
             )
-        }
+        }.sortedWith(compareBy({ it.name.lowercase() }, { it.id }))
         _connectedPeersFlow.value = list
     }
 

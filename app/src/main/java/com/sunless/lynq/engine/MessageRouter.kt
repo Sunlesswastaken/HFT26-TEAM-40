@@ -52,6 +52,8 @@ class MessageRouter(
     private val _incomingAlerts = MutableSharedFlow<LynqMessage>(extraBufferCapacity = 16)
     val incomingAlerts: SharedFlow<LynqMessage> = _incomingAlerts.asSharedFlow()
 
+    private val greetedPeerIds = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
     init {
         // Listen to incoming raw bytes from NearbyManager
         scope.launch {
@@ -63,7 +65,12 @@ class MessageRouter(
         // Listen for new connections to send PRESENCE and retry pending messages
         scope.launch {
             nearbyManager.connectedPeersFlow.collect { peers ->
-                if (peers.isNotEmpty()) {
+                val currentPeerIds = peers.map { it.id }.toSet()
+                greetedPeerIds.retainAll(currentPeerIds)
+
+                val newPeers = peers.filter { greetedPeerIds.add(it.id) }
+                if (newPeers.isNotEmpty()) {
+                    Log.i(tag, "New peers connected: ${newPeers.map { it.name }}, broadcasting presence")
                     broadcastPresence()
                     retryPendingQueue()
                 }
@@ -320,19 +327,28 @@ class MessageRouter(
     }
 
     private suspend fun handlePresence(endpointId: String?, wire: WireMessage) {
-        val peer = Peer(
-            id = wire.senderId,
-            name = wire.senderName,
-            connected = true,
-            hops = 1,
-            lastSeen = System.currentTimeMillis(),
-            publicKey = wire.senderPublicKey,
-        )
-        database.upsertPeer(peer)
+        val existing = database.getPeer(wire.senderId)
+        val shouldUpdateDb = existing == null ||
+            existing.name != wire.senderName ||
+            !existing.connected ||
+            existing.publicKey != wire.senderPublicKey
+
+        if (shouldUpdateDb) {
+            val peer = Peer(
+                id = wire.senderId,
+                name = wire.senderName,
+                connected = true,
+                hops = 1,
+                lastSeen = existing?.lastSeen ?: System.currentTimeMillis(),
+                publicKey = wire.senderPublicKey,
+            )
+            database.upsertPeer(peer)
+            Log.i(tag, "Registered presence in DB for ${wire.senderName} (${wire.senderId}) on endpoint $endpointId")
+        }
+
         if (endpointId != null) {
             nearbyManager.updateEndpointIdentity(endpointId, wire.senderId, wire.senderName)
         }
-        Log.i(tag, "Registered presence for ${wire.senderName} (${wire.senderId}) on endpoint $endpointId")
 
         // Mutual presence reply so both devices learn each other's identity and keys
         if (wire.payload != "PRESENCE_ACK" && endpointId != null) {

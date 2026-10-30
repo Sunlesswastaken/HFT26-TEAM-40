@@ -150,6 +150,17 @@ private fun ThreadList(
     val pal = Lynq.pal
     TopBar(reachableCount = reachableCount, title = "Messages")
 
+    val sortedPeers = remember(peers, messages) {
+        peers.sortedWith(
+            compareByDescending<Peer> { peer ->
+                messages.filter { it.senderId == peer.id || it.recipientId == peer.id }
+                    .maxOfOrNull { it.createdAt } ?: 0L
+            }.thenByDescending { it.connected }
+            .thenBy { it.name.lowercase() }
+            .thenBy { it.id }
+        )
+    }
+
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Text(
             text = "Direct & multi-hop encrypted channels",
@@ -159,7 +170,7 @@ private fun ThreadList(
         )
 
         AppleGroupedCard {
-            peers.forEachIndexed { index, peer ->
+            sortedPeers.forEachIndexed { index, peer ->
                 val peerMessages = messages.filter { it.senderId == peer.id || it.recipientId == peer.id }
                 val latest = peerMessages.maxByOrNull { it.createdAt }
                 val preview = latest?.body ?: "Encrypted channel ready (${if (peer.hops == 1) "direct" else "${peer.hops} hops"})"

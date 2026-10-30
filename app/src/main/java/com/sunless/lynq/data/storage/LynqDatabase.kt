@@ -253,7 +253,7 @@ class LynqDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
             null,
             null,
             null,
-            "connected DESC, last_seen DESC",
+            "connected DESC, name COLLATE NOCASE ASC, peer_id ASC",
         )
         cursor.use {
             while (it.moveToNext()) {
