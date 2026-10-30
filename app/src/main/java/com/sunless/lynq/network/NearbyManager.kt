@@ -54,6 +54,7 @@ class NearbyManager(
 
     private val connectedEndpoints = ConcurrentHashMap<String, ConnectedEndpoint>()
     private val connectingEndpoints = ConcurrentHashMap.newKeySet<String>()
+    private val pendingEndpointInfo = ConcurrentHashMap<String, Pair<String, String>>()
 
     private val _connectedPeersFlow = MutableStateFlow<List<Peer>>(emptyList())
     val connectedPeersFlow: StateFlow<List<Peer>> = _connectedPeersFlow.asStateFlow()
@@ -65,13 +66,21 @@ class NearbyManager(
     private var isAdvertising = false
     private var isDiscovering = false
 
-    /** Compact local endpoint advertisement: "DisplayName#DeviceId" (under 60 bytes) */
+    /** Compact local endpoint advertisement: "DisplayName#DeviceId" */
     private val endpointName: String get() = "$localDeviceName#$localDeviceId"
 
     fun start() {
-        Log.i(tag, "Starting Nearby Connections advertising and discovery (P2P_CLUSTER)")
-        startAdvertising()
-        startDiscovery()
+        Log.i(tag, "Starting Nearby Connections advertising and discovery (P2P_CLUSTER) for $endpointName")
+        scope.launch {
+            try {
+                client.stopAdvertising()
+                client.stopDiscovery()
+            } catch (_: Exception) {}
+            isAdvertising = false
+            isDiscovering = false
+            startAdvertising()
+            startDiscovery()
+        }
     }
 
     fun stop() {
@@ -87,6 +96,7 @@ class NearbyManager(
         isDiscovering = false
         connectedEndpoints.clear()
         connectingEndpoints.clear()
+        pendingEndpointInfo.clear()
         _connectedPeersFlow.value = emptyList()
     }
 
@@ -95,11 +105,16 @@ class NearbyManager(
         val options = AdvertisingOptions.Builder().setStrategy(strategy).build()
         client.startAdvertising(endpointName, serviceId, connectionLifecycleCallback, options)
             .addOnSuccessListener {
-                Log.d(tag, "Advertising started successfully as $endpointName")
+                Log.i(tag, "Advertising active as: $endpointName")
                 isAdvertising = true
             }
             .addOnFailureListener { e ->
-                Log.w(tag, "Failed to start advertising: ${e.message}")
+                Log.w(tag, "Advertising failed: ${e.message}, will retry in 3s")
+                isAdvertising = false
+                scope.launch {
+                    kotlinx.coroutines.delay(3000)
+                    if (!isAdvertising) startAdvertising()
+                }
             }
     }
 
@@ -108,56 +123,78 @@ class NearbyManager(
         val options = DiscoveryOptions.Builder().setStrategy(strategy).build()
         client.startDiscovery(serviceId, endpointDiscoveryCallback, options)
             .addOnSuccessListener {
-                Log.d(tag, "Discovery started successfully")
+                Log.i(tag, "Discovery active for service $serviceId")
                 isDiscovering = true
             }
             .addOnFailureListener { e ->
-                Log.w(tag, "Failed to start discovery: ${e.message}")
+                Log.w(tag, "Discovery failed: ${e.message}, will retry in 3s")
+                isDiscovering = false
+                scope.launch {
+                    kotlinx.coroutines.delay(3000)
+                    if (!isDiscovering) startDiscovery()
+                }
             }
     }
 
     private val endpointDiscoveryCallback = object : EndpointDiscoveryCallback() {
         override fun onEndpointFound(endpointId: String, info: DiscoveredEndpointInfo) {
-            Log.d(tag, "Discovered endpoint: $endpointId (${info.endpointName})")
+            Log.i(tag, "Discovered endpoint: $endpointId (${info.endpointName})")
             if (connectingEndpoints.contains(endpointId) || connectedEndpoints.containsKey(endpointId)) {
                 return
             }
 
-            // Simple tie-break to avoid both devices requesting simultaneously
-            val remoteName = info.endpointName
-            val shouldInitiate = endpointName.compareTo(remoteName) > 0
-            if (shouldInitiate) {
-                connectingEndpoints.add(endpointId)
-                client.requestConnection(endpointName, endpointId, connectionLifecycleCallback)
-                    .addOnFailureListener { e ->
-                        Log.w(tag, "Connection request failed to $endpointId: ${e.message}")
-                        connectingEndpoints.remove(endpointId)
-                    }
-            }
+            val parts = info.endpointName.split("#")
+            val pName = parts.getOrNull(0)?.takeIf { it.isNotBlank() } ?: "Peer-$endpointId"
+            val pId = parts.getOrNull(1)?.takeIf { it.isNotBlank() } ?: endpointId
+            pendingEndpointInfo[endpointId] = pName to pId
+
+            connectingEndpoints.add(endpointId)
+            Log.i(tag, "Requesting connection to endpoint $endpointId ($pName)...")
+            client.requestConnection(endpointName, endpointId, connectionLifecycleCallback)
+                .addOnSuccessListener {
+                    Log.i(tag, "Connection request successfully submitted to $endpointId")
+                }
+                .addOnFailureListener { e ->
+                    Log.w(tag, "Connection request failed to $endpointId: ${e.message}")
+                    connectingEndpoints.remove(endpointId)
+                }
         }
 
         override fun onEndpointLost(endpointId: String) {
             Log.d(tag, "Endpoint lost: $endpointId")
             connectingEndpoints.remove(endpointId)
+            pendingEndpointInfo.remove(endpointId)
         }
     }
 
     private val connectionLifecycleCallback = object : ConnectionLifecycleCallback() {
         override fun onConnectionInitiated(endpointId: String, info: ConnectionInfo) {
             Log.i(tag, "Connection initiated from $endpointId (${info.endpointName}), accepting...")
+            val parts = info.endpointName.split("#")
+            val pName = parts.getOrNull(0)?.takeIf { it.isNotBlank() } ?: "Peer-$endpointId"
+            val pId = parts.getOrNull(1)?.takeIf { it.isNotBlank() } ?: endpointId
+            pendingEndpointInfo[endpointId] = pName to pId
+
             client.acceptConnection(endpointId, payloadCallback)
+                .addOnSuccessListener {
+                    Log.i(tag, "acceptConnection called successfully for $endpointId")
+                }
                 .addOnFailureListener { e ->
                     Log.w(tag, "Accept connection failed for $endpointId: ${e.message}")
                     connectingEndpoints.remove(endpointId)
+                    pendingEndpointInfo.remove(endpointId)
                 }
         }
 
         override fun onConnectionResult(endpointId: String, resolution: ConnectionResolution) {
             connectingEndpoints.remove(endpointId)
+            val info = pendingEndpointInfo.remove(endpointId)
             when (resolution.status.statusCode) {
                 ConnectionsStatusCodes.STATUS_OK -> {
-                    Log.i(tag, "Successfully connected to endpoint $endpointId")
-                    registerEndpoint(endpointId)
+                    val peerName = info?.first ?: "Peer-$endpointId"
+                    val peerId = info?.second ?: endpointId
+                    Log.i(tag, "Successfully connected to endpoint $endpointId ($peerName / $peerId)")
+                    registerEndpoint(endpointId, peerId, peerName)
                 }
                 ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED -> {
                     Log.w(tag, "Connection rejected by endpoint $endpointId")
@@ -179,6 +216,7 @@ class NearbyManager(
             if (payload.type == Payload.Type.BYTES) {
                 val bytes = payload.asBytes()
                 if (bytes != null) {
+                    Log.i(tag, "Received ${bytes.size} raw bytes from endpoint $endpointId")
                     scope.launch {
                         _rawPayloadFlow.emit(endpointId to bytes)
                     }
@@ -191,14 +229,13 @@ class NearbyManager(
         }
     }
 
-    private fun registerEndpoint(endpointId: String) {
-        // We will receive PRESENCE or name details in protocol handshake
-        val placeholder = ConnectedEndpoint(
+    private fun registerEndpoint(endpointId: String, peerId: String = endpointId, peerName: String = "Peer-$endpointId") {
+        val endpoint = ConnectedEndpoint(
             endpointId = endpointId,
-            peerId = endpointId,
-            peerName = "Peer-$endpointId",
+            peerId = peerId,
+            peerName = peerName,
         )
-        connectedEndpoints[endpointId] = placeholder
+        connectedEndpoints[endpointId] = endpoint
         updatePeersList()
     }
 

@@ -1,6 +1,15 @@
 package com.sunless.lynq.engine
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.util.Log
+import androidx.core.app.NotificationCompat
+import com.sunless.lynq.LynqApp
+import com.sunless.lynq.MainActivity
 import com.sunless.lynq.crypto.CryptoManager
 import com.sunless.lynq.data.storage.LynqDatabase
 import com.sunless.lynq.domain.model.DeliveryStatus
@@ -275,6 +284,7 @@ class MessageRouter(
 
             if (wire.type == MessageType.SOS) {
                 _incomingAlerts.emit(incomingMsg)
+                notifyIncomingSos(incomingMsg)
             }
 
             // Send application-level ACK back to original sender
@@ -322,7 +332,66 @@ class MessageRouter(
         if (endpointId != null) {
             nearbyManager.updateEndpointIdentity(endpointId, wire.senderId, wire.senderName)
         }
-        Log.d(tag, "Registered presence for ${wire.senderName} (${wire.senderId})")
+        Log.i(tag, "Registered presence for ${wire.senderName} (${wire.senderId}) on endpoint $endpointId")
+
+        // Mutual presence reply so both devices learn each other's identity and keys
+        if (wire.payload != "PRESENCE_ACK" && endpointId != null) {
+            val replyPresence = WireMessage(
+                messageId = UUID.randomUUID().toString(),
+                type = MessageType.PRESENCE,
+                priority = Priority.NORMAL,
+                senderId = myDeviceId,
+                senderName = myName,
+                payload = "PRESENCE_ACK",
+                senderPublicKey = cryptoManager.publicKeyString,
+                ttl = 1,
+            )
+            nearbyManager.sendBytes(endpointId, replyPresence.toBytes())
+        }
+    }
+
+    private fun notifyIncomingSos(msg: LynqMessage) {
+        try {
+            val context = LynqApp.instance
+            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = NotificationChannel(
+                    "lynq_emergency_alerts",
+                    "Emergency SOS Broadcasts",
+                    NotificationManager.IMPORTANCE_HIGH,
+                ).apply {
+                    description = "Critical offline emergency alerts from nearby devices"
+                    enableVibration(true)
+                    vibrationPattern = longArrayOf(0, 500, 200, 500, 200, 500)
+                }
+                nm.createNotificationChannel(channel)
+            }
+
+            val intent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val pi = PendingIntent.getActivity(
+                context,
+                msg.messageId.hashCode(),
+                intent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
+
+            val notification = NotificationCompat.Builder(context, "lynq_emergency_alerts")
+                .setSmallIcon(android.R.drawable.stat_notify_error)
+                .setContentTitle("🚨 EMERGENCY SOS BROADCAST")
+                .setContentText("From ${msg.senderName}: ${msg.body}")
+                .setStyle(NotificationCompat.BigTextStyle().bigText("🚨 EMERGENCY SOS BROADCAST\nFrom: ${msg.senderName}\n\n${msg.body}"))
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setAutoCancel(true)
+                .setContentIntent(pi)
+                .build()
+
+            nm.notify(msg.messageId.hashCode(), notification)
+        } catch (e: Exception) {
+            Log.e(tag, "Failed to post emergency notification", e)
+        }
     }
 
     private suspend fun sendAckBack(originalWire: WireMessage) {

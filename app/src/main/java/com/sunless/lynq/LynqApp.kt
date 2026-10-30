@@ -28,16 +28,17 @@ class LynqApp : Application() {
 
         database = LynqDatabase(this)
         cryptoManager = CryptoManager(this)
+        val myDeviceName = "${android.os.Build.MANUFACTURER.replaceFirstChar { it.uppercase() }} ${android.os.Build.MODEL}"
         nearbyManager = NearbyManager(
             context = this,
             localDeviceId = cryptoManager.deviceId,
-            localDeviceName = "Sunless",
+            localDeviceName = myDeviceName,
         )
         router = MessageRouter(
             database = database,
             cryptoManager = cryptoManager,
             nearbyManager = nearbyManager,
-            myName = "Sunless",
+            myName = myDeviceName,
         )
         locationProvider = LocationProvider(this)
 
@@ -51,10 +52,10 @@ class LynqApp : Application() {
         if (database.peersFlow.value.isEmpty()) {
             val now = System.currentTimeMillis()
             val initialPeers = listOf(
-                Peer(id = "2b7f9c41", name = "Aarav", connected = true, relaying = true, hops = 1, lastSeen = now - 4000),
-                Peer(id = "5d80e2aa", name = "Meera", connected = true, relaying = true, hops = 1, lastSeen = now - 11000),
-                Peer(id = "c14b76f3", name = "Kabir", connected = true, relaying = false, hops = 2, lastSeen = now - 38000),
-                Peer(id = "8ae0d915", name = "Priya", connected = true, relaying = false, hops = 3, lastSeen = now - 96000),
+                Peer(id = "2b7f9c41", name = "Aarav", connected = false, relaying = true, hops = 1, lastSeen = now - 4000),
+                Peer(id = "5d80e2aa", name = "Meera", connected = false, relaying = true, hops = 1, lastSeen = now - 11000),
+                Peer(id = "c14b76f3", name = "Kabir", connected = false, relaying = false, hops = 2, lastSeen = now - 38000),
+                Peer(id = "8ae0d915", name = "Priya", connected = false, relaying = false, hops = 3, lastSeen = now - 96000),
             )
             for (p in initialPeers) {
                 database.upsertPeer(p)

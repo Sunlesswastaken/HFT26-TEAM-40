@@ -25,8 +25,20 @@ class MainActivity : ComponentActivity() {
 
     private val requestPermissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
-    ) { _ ->
-        // Permissions handled; mesh engine re-checks connections dynamically
+    ) { grants ->
+        val anyGranted = grants.values.any { it }
+        if (anyGranted) {
+            val app = application as? LynqApp
+            app?.nearbyManager?.start()
+            app?.router?.start()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val app = application as? LynqApp
+        app?.nearbyManager?.start()
+        app?.router?.start()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
