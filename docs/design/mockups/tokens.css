@@ -160,13 +160,8 @@ body::before {
 .brk::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
 
 /* ---------- header: system status bar ---------- */
-.sysbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px var(--gutter) 0;
-}
-.sysbar .logo { font-family: var(--pix); font-size: 15px; letter-spacing: 1px; }
+.sysbar { display: flex; align-items: center; justify-content: space-between; padding: 16px var(--gutter) 0; }
+.sysbar .logo { font-family: var(--pix); font-size: 24px; letter-spacing: 1px; line-height: 1; padding-bottom: 4px; }
 .sysbar .stat {
   font-size: 16px;
   color: var(--ph-dim);
@@ -211,6 +206,8 @@ body::before {
 .rows { border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); }
 .row { display: flex; gap: 12px; padding: 12px 14px; align-items: flex-start; }
 .row + .row { border-top: 1px dashed var(--line); }
+a.row { text-decoration: none; color: inherit; }
+a.row:focus-visible { outline: 2px solid var(--ph); outline-offset: -2px; }
 
 /* ---------- avatar: terminal block, not a circle ---------- */
 .avatar {
@@ -249,6 +246,10 @@ body::before {
   cursor: pointer;
 }
 .btn:active { transform: translateY(1px); }
+.btn:focus-visible, .sos-btn:focus-visible, .cmdbar .cmd:focus-visible {
+  outline: 2px solid var(--ph);
+  outline-offset: 2px;
+}
 .btn-ghost { background: transparent; border-color: var(--line); color: var(--ph-dim); }
 
 /* ---------- SOS: the red lever ---------- */
@@ -327,9 +328,11 @@ body::before {
 }
 .cmdbar .cmd {
   flex: 1;
+  min-height: 48px;               /* Android touch-target minimum */
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   padding: 7px 0 5px;
   font-family: var(--pix);
