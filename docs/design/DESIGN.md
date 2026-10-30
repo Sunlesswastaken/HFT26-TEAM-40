@@ -1,73 +1,84 @@
-# Lynq UI design — Minimal & Clean
+# Lynq UI design — Black & Green Field Terminal
 
-Status: mockups validated (light, dark, and key states), Compose port in progress.
+Status: mockups validated (all screens + states), Compose port pending.
 
 ## North star
 
-An emergency tool with a live network view: calm, readable under stress,
-one clear focal point per screen. Not a chat app.
+A field instrument, not a chat app: near-black phosphor CRT, one green,
+pixel type for identity, ASCII motifs for the mesh. Emergency-grade
+readability at arm's length.
 
-## Tokens (source of truth: `app/.../ui/theme/`)
+## Tokens (`docs/design/mockups/tokens.css`)
 
-| Token | Light | Dark | Use |
-|---|---|---|---|
-| bg | #F7F7F4 | #0A0B0A | page background |
-| surface | #FFFFFF | #121413 | cards, rows, nav |
-| sunken | #EFEFE9 | #171A18 | avatars, chips, neutral pills |
-| ink | #141614 | #ECEEE9 | text, filled avatars, "YOU" node |
-| muted | #6B7069 | #98A09B | secondary text, routes, timestamps |
-| hairline | #E2E2DA | #262A27 | 1px card borders, graph lines |
-| signal | #14634F | #6FD3B2 | delivered status, online dot |
-| sos | #B42318 | #FF6A5D | SOS only — never decorative |
-| warn | #8A5A00 | #E0A94D | HIGH priority marks |
+| Token | Value | Use |
+|---|---|---|
+| bg | #060A07 | page (near-black, green-tinted, never #000) |
+| panel | #0A120C | panels, rows, nav |
+| panel-hi | #0E1A10 | raised panels, active inputs |
+| line / line-hi | #1C3320 / #2E5236 | hairline / lit borders |
+| ph | #7DF2A0 | primary text (phosphor green) |
+| ph-dim | #5FC47F | secondary text (~8.8:1) |
+| ph-faint | #4E9C69 | meta, timestamps (~5.7:1) |
+| amber | #E8C468 | warnings + HIGH priority only |
+| sos | #FF7A68 | SOS / critical only (~5.5:1) |
 
-Type: system sans, one family. Display 40/light (-1.2 tracking) for hero
-numbers; headline 26/semibold for screen titles; body 14–16; labelSmall
-11/medium/+1.4 tracking uppercase for eyebrows. Monospace for device IDs,
-routes, hops, timestamps.
+Type: **Silkscreen** (pixel, OFL) for titles, section heads, readout
+numbers. **VT323** (terminal, OFL) for everything else — both bundled in
+`docs/design/mockups/fonts/`.
 
-Shapes: cards 18px radius, flat, 1px hairline border, no shadow. Pills and
-avatars circular.
+Shapes: ONE radius — 2px, near-sharp. Corner brackets `┌ ┐` motif on key
+panels.
 
-## Screen inventory
+## Signature elements
 
-1. **Dashboard** — brand row + "4 reachable" live pill; hero stats
-   (reachable / relaying / queued) as big light numbers; mesh preview card;
-   activity rows with route traces; quick SOS button.
-2. **Messages** — thread list (avatar, name, priority mark, time, preview,
-   delivery pill, unread badge) + open thread with bubbles, per-message
-   route trace and delivery state.
-3. **Emergency** — category chips, optional note, location toggle,
-   large hold-to-send SOS button; after sending, live hop-by-hop tracking;
-   received alerts history.
-4. **Mesh Explorer** — radial topology with highlighted live route (red),
-   "SOS passing" flow tags, legend, relay activity, device list with
-   hop counts and last-seen.
-5. **Settings** — identity card (name, key fingerprint mono, device),
-   security, battery & network, permissions, honest scope note.
+- **CRT scanlines** + subtle vignette (fixed overlay, pointer-events none)
+- **Boot log** on the dashboard — terminal is alive, blinking cursor `_`
+- **ASCII mesh topology** (`= | > -` links, YOU at centre, relay nodes lit)
+- **Route traces** everywhere: `YOU > AARAV > KABIR > PRIYA`
+- **ASCII-only glyphs** — VT323 has no box-drawing/symbols (verified);
+  all icons are ASCII text: `[*] [M] [!] [=] [$]`, status tags `DLV RLY SENT`
+- **Hop meter** `[####......] 3/6` for live SOS tracking
+- **Red SOS lever** — full-width, the only solid red element on any screen
 
-App shell: top brand row + 5-item bottom nav (Mesh / Messages / SOS / Explore
-/ Settings), SOS item in signal red — never decoratively.
+## Screens
 
-## Graph layout rule
+1. **DASH** — boot log, readouts (REACHABLE/RELAYING/QUEUED), ASCII topology,
+   activity feed with routes, SOS lever
+2. **MSGS** — thread list (unread badges, hop counts, status tags) + open
+   thread with per-message route traces
+3. **SOS** — categories, note, location toggle → post-send live hop tracker
+   with hop meter; received alerts history
+4. **MESH** — full ASCII topology with live SOS route, relay activity, device
+   list (id · hops · seen)
+5. **SYS** — identity (node fingerprint in dashed box), security, mesh
+   counters, permissions, scope note
 
-`YOU` centre; peers on the ring. A highlighted multi-hop route must connect
-consecutive ring neighbours (chords), never pass through the centre node.
-Relaying peers render filled (ink); reachable peers are sunken circles.
+## Knit feature mapping (new screens worth adding)
+
+From the Knit repo exploration (GPL-3.0, /tmp/opencode/knit):
+- **Your mesh** screen — messages your phone relayed for others (fits SYS)
+- **Drafts** — composer keeps unsent text (fits MSGS)
+- **Delivery ticks ✓/✓✓ per message** (already have DLV/RLY/SENT)
+
+## Port plan (engine)
+
+Port from Knit (all pure Kotlin, tested): `MeshRouter` (dedup/TTL/jitter/
+overhear-suppression), `SeenSet`, CBOR `Wire` envelope (stripped to Lynq's
+CHAT/SOS/ACK/PRESENCE), `ForwardStore`/`ForwardSync` custody, `NodeId`.
+Skip: raw NAN/BLE transports (Lynq uses Nearby Connections), spools, LoRa.
+License note: porting GPL-3.0 code makes Lynq GPL-3.0.
 
 ## Deliverables
 
-- Mockups: `docs/design/mockups/*.html` (tokens.css shared; `?theme=dark`,
-  `?state=open|tracking` URL states)
-- Screenshots: `shots/*.png` (light set, `sheet.png` overview, `state-*.png`)
+- Mockups: `docs/design/mockups/*.html` + `tokens.css` + `fonts/`
+- Screenshots: `shots/` (light set — dark IS the design; states:
+  `state-thread-open.png`, `state-sos-tracking.png`)
 
 ## Delivery notes
 
-- Eyebrow labels (11px uppercase) are a deliberate part of the token set,
-  matching the app's `labelSmall` — used to group sections, not as decoration.
-- Opens in mobile viewport 390×844. All automated tool checks pass
-  (contrast, overflow, console errors). One contrast fix applied:
-  neutral "sent/pending" pill text darkened from #6B7069 to #54594F (4.39→4.84:1).
-- Visual self-review was impossible in this session (no image input, reviewer
-  also blind). Geometry of graphs was verified by coordinate calculation
-  instead; flag for a human eye pass before final polish.
+- ASCII mesh line-height 1.15 is deliberate: square character cell spacing.
+- Scanline overlay is a design feature, not a lint issue to remove.
+- Fonts verified: VT323 does NOT cover Unicode box-drawing or symbols —
+  the design is pure ASCII by necessity, which strengthened the aesthetic.
+- Visual self-review impossible this session (no image input); all
+  automated checks pass. Human eye pass recommended.
