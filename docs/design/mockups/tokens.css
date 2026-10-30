@@ -35,6 +35,7 @@
 
   --pix: "Silkscreen", monospace;
   --term: "VT323", monospace;
+  --sans: "Inter", "Segoe UI", "Roboto", "Helvetica Neue", system-ui, sans-serif;
 
   --r: 2px;                 /* ONE radius: near-sharp, terminal-true */
   --gutter: 16px;
@@ -45,15 +46,15 @@
 body {
   background: var(--bg);
   color: var(--ph);
-  font-family: var(--term);
-  font-size: 19px;           /* VT323 runs small; 19px ~= 14px visual */
-  line-height: 1.45;
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.5;
   width: 390px;
   min-height: 844px;
   margin: 0 auto;
   position: relative;
   padding-bottom: 110px;
-  -webkit-font-smoothing: none;   /* keep pixel edges crisp */
+  -webkit-font-smoothing: antialiased;
 }
 
 /* CRT scanlines — fixed overlay, pointer-events none */
@@ -83,7 +84,14 @@ body::before {
 ::selection { background: var(--ph); color: var(--bg); }
 
 /* ---------- type roles ---------- */
+/* TWO-TIER SYSTEM:
+   - silkscreen (pixel) = identity: titles, buttons, tags, readouts, nav
+   - sans = reading: message bodies, notes, descriptions, previews
+   - vt323 (terminal) = flavor only: boot log, ascii topology, cursors */
+
 .pix { font-family: var(--pix); font-weight: 700; }
+.term { font-family: var(--term); }
+
 .h-screen {            /* screen title: pixel, medium */
   font-family: var(--pix);
   font-size: 22px;
@@ -99,10 +107,17 @@ body::before {
   text-transform: uppercase;
   color: var(--ph-dim);
 }
-.term-s { font-size: 19px; }   /* body */
-.term-xs { font-size: 16px; color: var(--ph-faint); } /* meta, timestamps */
+.body-s { font-size: 16px; }   /* readable body — sans */
+.body-xs { font-size: 14px; color: var(--ph-faint); } /* readable meta — sans */
+.term-s { font-family: var(--term); font-size: 20px; }   /* flavor: log lines */
+.term-xs { font-family: var(--term); font-size: 17px; color: var(--ph-faint); } /* flavor: node ids, ascii meta */
 .dim { color: var(--ph-dim); }
 .faint { color: var(--ph-faint); }
+.who {                  /* names/labels: pixel, scannable */
+  font-family: var(--pix);
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
 
 /* blinking cursor block — the terminal is ALIVE */
 .cursor::after {
@@ -171,8 +186,10 @@ body::before {
   gap: 6px;
   border: 1px solid var(--line);
   color: var(--ph-dim);
-  padding: 1px 8px 2px;
-  font-size: 16px;
+  padding: 2px 8px 3px;
+  font-family: var(--pix);
+  font-size: 10px;
+  letter-spacing: 0.5px;
   border-radius: var(--r);
   white-space: nowrap;
 }
@@ -180,8 +197,13 @@ body::before {
 .tag.warn { border-color: var(--amber); color: var(--amber); }
 .tag.crit { border-color: var(--sos); color: var(--sos); }
 
-/* ---------- route trace ---------- */
-.route { font-size: 17px; color: var(--ph-dim); letter-spacing: 0.5px; }
+/* ---------- route trace: readable mono identity, pixel font ---------- */
+.route {
+  font-family: var(--pix);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: var(--ph-dim);
+}
 .route .arrow { color: var(--ph-faint); padding: 0 2px; }
 .route b { color: var(--ph); font-weight: 400; }
 
@@ -283,9 +305,9 @@ body::before {
   border: 1px solid var(--line);
   border-radius: var(--r);
   color: var(--ph);
-  font-family: var(--term);
-  font-size: 19px;
-  padding: 10px 12px;
+  font-family: var(--sans);
+  font-size: 16px;
+  padding: 12px 14px;
   width: 100%;
 }
 .field::placeholder { color: var(--ph-faint); }
@@ -326,7 +348,7 @@ body::before {
 .cmdbar .cmd.sos.active { background: var(--sos); color: #140504; }
 
 /* ---------- ASCII mesh graph ---------- */
-.mesh-stage { line-height: 1.15; font-size: 17px; white-space: pre; overflow: hidden; }
+.mesh-stage { font-family: var(--term); line-height: 1.15; font-size: 17px; white-space: pre; overflow: hidden; }
 .mesh-stage .n-you { color: var(--ph); }
 .mesh-stage .n-relay { color: var(--ph); background: var(--panel-hi); }
 .mesh-stage .n-link { color: var(--ph-faint); }
@@ -338,5 +360,5 @@ body::before {
 .meter b { color: var(--ph); font-weight: 400; }
 
 /* ---------- boot log ---------- */
-.log { font-size: 17px; line-height: 1.5; }
+.log { font-family: var(--term); font-size: 17px; line-height: 1.5; }
 .log .t { color: var(--ph-faint); }

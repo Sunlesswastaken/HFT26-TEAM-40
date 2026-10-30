@@ -40,11 +40,12 @@
     border: 1px solid var(--line);
     background: var(--panel);
     border-radius: var(--r);
-    padding: 8px 12px 6px;
-    font-size: 19px;
+    padding: 10px 14px 8px;
+    font-size: 16px;
+    line-height: 1.45;
   }
   .msg.mine .bub { border-color: var(--line-hi); background: var(--panel-hi); }
-  .bub .stamp { font-size: 15px; color: var(--ph-faint); margin-top: 2px; }
+  .bub .stamp { font-family: var(--term); font-size: 15px; color: var(--ph-faint); margin-top: 4px; }
   .msg .stamps { margin-top: 3px; }
 
   .composer {
@@ -53,8 +54,10 @@
     border: 1px solid var(--line);
     background: var(--panel);
     border-radius: var(--r);
-    padding: 12px 14px;
+    padding: 14px 16px;
     color: var(--ph-faint);
+    font-family: var(--term);
+    font-size: 17px;
   }
   .composer .send {
     font-family: var(--pix); font-size: 11px; letter-spacing: 1px;
@@ -78,7 +81,7 @@
           <div class="avatar">A</div>
           <div style="flex:1;min-width:0">
             <div class="top">
-              <span>AARAV</span>
+              <span class="who">AARAV</span>
               <span class="unread">2</span>
               <span class="term-xs time">2m</span>
             </div>
@@ -93,7 +96,7 @@
           <div class="avatar">M</div>
           <div style="flex:1;min-width:0">
             <div class="top">
-              <span>MEERA</span>
+              <span class="who">MEERA</span>
               <span class="tag warn">HIGH</span>
               <span class="term-xs time">26m</span>
             </div>
@@ -108,7 +111,7 @@
           <div class="avatar">P</div>
           <div style="flex:1;min-width:0">
             <div class="top">
-              <span>PRIYA</span>
+              <span class="who">PRIYA</span>
               <span class="term-xs time">74m</span>
             </div>
             <div class="preview">Can you hear us? Nobody has signal here.</div>
@@ -120,7 +123,7 @@
         </a>
       </div>
 
-      <div class="sec term-xs">
+      <div class="sec body-xs">
         Messages hop device to device. Each shows the route it took.
       </div>
     </main>
@@ -140,7 +143,7 @@
       <a class="back" href="messages.html">&lt;</a>
       <div class="avatar" style="width:32px;height:32px;font-size:12px">A</div>
       <div>
-        <div>AARAV</div>
+        <div class="who">AARAV</div>
         <div class="term-xs">2b7f9c41 · 1 hop · link ok</div>
       </div>
       <span class="tag ok" style="margin-left:auto">vDLV</span>

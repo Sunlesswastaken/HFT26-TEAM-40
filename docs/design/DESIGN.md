@@ -22,9 +22,16 @@ readability at arm's length.
 | amber | #E8C468 | warnings + HIGH priority only |
 | sos | #FF7A68 | SOS / critical only (~5.5:1) |
 
-Type: **Silkscreen** (pixel, OFL) for titles, section heads, readout
-numbers. **VT323** (terminal, OFL) for everything else — both bundled in
-`docs/design/mockups/fonts/`.
+Type — **two-tier system**:
+- **Silkscreen** (pixel, OFL) = identity tier: screen titles, section heads,
+  buttons, tags, readout numbers, route traces, and **names** (people are
+  headings, so they stay pixel)
+- **Sans** (system) = reading tier: message bodies, note input, previews,
+  descriptions, explainer copy — anything longer than a label
+- **VT323** (terminal, OFL) = flavor only: boot log, ASCII topology glyph art,
+  timestamps/hop counts/IDs (data, not prose)
+
+Fonts bundled in `docs/design/mockups/fonts/`.
 
 Shapes: ONE radius — 2px, near-sharp. Corner brackets `┌ ┐` motif on key
 panels.
