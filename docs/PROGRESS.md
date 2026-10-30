@@ -41,16 +41,19 @@
 - **Background Relay Service (`LynqMeshService`)**:
   - Foreground service with notification maintaining mesh links when the screen locks.
 
-- **UI Overhaul & ViewModel Integration**:
+- **UI Overhaul & Apple Minimalist Polish**:
   - Fully bound to `LynqViewModel` across all 5 screens: Network Dashboard, Messages, Emergency SOS, Mesh Explorer, and Settings.
   - Interactive Obsidian knowledge graph with harmonic physics and multi-touch zoom (`MeshGraph.kt`).
   - Real-time SOS broadcast flow with live hop timeline and ACK confirmation.
   - Runtime permissions requester for Bluetooth, Nearby Wi-Fi, Location, and Notifications in `MainActivity`.
+  - **Apple Concentric Navigation Dock (`CmdBar.kt`)**: Implemented strict concentric curvature geometry ($R_{outer}=28\text{dp}$, $4\text{dp}$ padding, $R_{inner}=24\text{dp}$) with subtle 0.5dp glass highlight border.
+  - **Tactile 3-Second Hold SOS (`HoldToSosButton.kt`)**: 3-second hold-to-confirm prevention against accidental sends, featuring circular 360° charging countdown arc, smooth scale press compression, radiant horizontal progress fill, bottom charging bar, and live percentage readout.
 
 - **Verification & Testing**:
   - Unit test suite (`MeshProtocolTest.kt`): wire serialization round-trip, crypto keygen & signing, E2EE AES-GCM encryption/decryption, priority queue ordering, and TTL route decrements.
   - `./gradlew testDebugUnitTest` passing 100%.
   - `./gradlew assembleDebug` builds `app-debug.apk` cleanly with 0 errors.
+  - Streamed install tested and verified on physical hardware (`00386769G001856` / `FroggerIND`).
 
 ## Next steps
 

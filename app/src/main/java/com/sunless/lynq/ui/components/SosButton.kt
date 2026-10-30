@@ -64,7 +64,6 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -72,7 +71,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 /**
  * 3-Second Hold-to-Confirm Emergency SOS Button.
  * Requires user to continuously press and hold for 3 seconds to prevent accidental sends.
- * Features an animated circular arc, horizontal radiant fill, bottom charging bar, and press compression.
+ * Features an animated circular arc, horizontal radiant fill, and press compression.
  */
 @Composable
 fun HoldToSosButton(
@@ -254,24 +253,6 @@ fun HoldToSosButton(
                         },
                         style = AppleFootnote,
                         color = Color.White.copy(alpha = 0.88f),
-                    )
-                }
-            }
-
-            // 3. Crisp High-Contrast Bottom Charging Bar
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(3.5.dp)
-                    .align(Alignment.BottomCenter)
-                    .background(Color.Black.copy(alpha = 0.22f)),
-            ) {
-                if (progress.value > 0f) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(fraction = progress.value)
-                            .fillMaxHeight()
-                            .background(Color.White),
                     )
                 }
             }
