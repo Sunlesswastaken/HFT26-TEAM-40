@@ -12,6 +12,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Lynq"
+            android:enableOnBackInvokedCallback="false"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

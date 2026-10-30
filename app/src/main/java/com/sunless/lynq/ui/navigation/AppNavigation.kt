@@ -3,9 +3,10 @@ package com.sunless.lynq.ui.navigation
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraph
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder
@@ -20,20 +21,26 @@ import com.sunless.lynq.ui.screens.MessagesScreen
 import com.sunless.lynq.ui.screens.SettingsScreen
 
 @Composable
-fun AppNavigation(navController: NavHostController = rememberNavController()) {
+fun AppNavigation(
+    navController: NavHostController = rememberNavController(),
+    modifier: Modifier = Modifier,
+) {
     NavHost(
         navController = navController,
+        modifier = modifier,
         startDestination = Screen.Dashboard.route,
-        // Terminal feel: quick crossfade + a small vertical shift, no bouncy
-        // material motion. Short enough to feel instant, smooth enough not
-        // to flash-cut.
+        // Standard horizontal slide + fade, the way other apps switch screens.
         enterTransition = {
-            fadeIn(tween(200)) + slideInVertically(tween(240)) { it / 20 }
+            slideInHorizontally(tween(240)) { it / 4 } + fadeIn(tween(200))
         },
-        exitTransition = { fadeOut(tween(160)) },
-        popEnterTransition = { fadeIn(tween(200)) },
+        exitTransition = {
+            slideOutHorizontally(tween(240)) { -it / 4 } + fadeOut(tween(180))
+        },
+        popEnterTransition = {
+            slideInHorizontally(tween(240)) { -it / 4 } + fadeIn(tween(200))
+        },
         popExitTransition = {
-            fadeOut(tween(160)) + slideOutVertically(tween(240)) { it / 20 }
+            slideOutHorizontally(tween(240)) { it / 4 } + fadeOut(tween(180))
         },
     ) {
         composable(Screen.Dashboard.route) { DashboardScreen(navController) }
