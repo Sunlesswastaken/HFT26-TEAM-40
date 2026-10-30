@@ -8,6 +8,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -140,7 +141,7 @@ fun CmdBar(
                         }
                     }
                 },
-            shape = RoundedCornerShape(32.dp),
+            shape = RoundedCornerShape(28.dp),
             color = Color(0xF41C1C1E), // Frosted Apple Secondary Background (95% opaque)
             border = BorderStroke(0.5.dp, Color(0x33FFFFFF)), // Apple delicate hairline
             shadowElevation = 14.dp,
@@ -148,7 +149,7 @@ fun CmdBar(
             BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 6.dp, vertical = 5.dp),
+                    .padding(4.dp), // Uniform 4dp margin on all sides for mathematical concentricity
             ) {
                 val totalWidth = maxWidth
                 val tabWidth = totalWidth / items.size
@@ -163,7 +164,7 @@ fun CmdBar(
                     label = "slidingPillPosition",
                 )
 
-                // Smooth morphing pill background color
+                // Smooth morphing pill background & border colors
                 val currentVisualItem = items[visualIndex]
                 val pillColor by animateColorAsState(
                     targetValue = if (currentVisualItem.isEmergency) {
@@ -175,15 +176,30 @@ fun CmdBar(
                     label = "pillColorMorph",
                 )
 
+                val pillBorderColor by animateColorAsState(
+                    targetValue = if (currentVisualItem.isEmergency) {
+                        pal.emergencyRed.copy(alpha = 0.45f)
+                    } else {
+                        pal.accentBlue.copy(alpha = 0.35f)
+                    },
+                    animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing),
+                    label = "pillBorderColorMorph",
+                )
+
                 // 1. Sliding Pill Background Indicator
+                // Concentricity rule: R_inner = R_outer (28dp) - padding (4dp) = 24dp
                 Box(
                     modifier = Modifier
                         .offset(x = tabWidth * animatedIndex)
                         .width(tabWidth)
-                        .padding(horizontal = 2.dp)
                         .height(48.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(pillColor),
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(pillColor)
+                        .border(
+                            width = 0.5.dp,
+                            color = pillBorderColor,
+                            shape = RoundedCornerShape(24.dp),
+                        ),
                 )
 
                 // 2. Navigation Tab Icons & Labels Row
@@ -209,7 +225,6 @@ fun CmdBar(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .padding(horizontal = 2.dp)
                                 .height(48.dp),
                             contentAlignment = Alignment.Center,
                         ) {
