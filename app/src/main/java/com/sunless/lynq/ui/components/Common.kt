@@ -1,226 +1,314 @@
 package com.sunless.lynq.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.sunless.lynq.domain.model.DeliveryStatus
-import com.sunless.lynq.domain.model.Priority
+import androidx.compose.ui.unit.sp
 import com.sunless.lynq.ui.theme.Lynq
-import com.sunless.lynq.ui.theme.MonoStyle
+import com.sunless.lynq.ui.theme.RouteStyle
+import com.sunless.lynq.ui.theme.TerminalStyle
 
-/** Uppercase, letter-spaced label used above every section. */
+// ---------- CRT overlay: scanlines + vignette ----------
+
+/**
+ * Fixed overlay drawing CRT scanlines over the whole screen.
+ * Cheap: one Canvas, one drawLine per 3px band, no allocation per frame.
+ * Pure decoration — no pointer events.
+ */
 @Composable
-fun Eyebrow(
-    text: String,
-    modifier: Modifier = Modifier,
-    color: Color = Lynq.palette.muted,
-) {
-    Text(
-        text = text.uppercase(),
-        modifier = modifier,
-        style = MaterialTheme.typography.labelSmall,
-        color = color,
-    )
+fun CtOverlay(modifier: Modifier = Modifier) {
+    val band = Color.Black.copy(alpha = 0.13f)
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val h = constraints.maxHeight.toFloat()
+        Canvas(Modifier.matchParentSize()) {
+            var y = 0f
+            while (y < h) {
+                drawLine(
+                    color = band,
+                    start = Offset(0f, y + 2f),
+                    end = Offset(size.width, y + 2f),
+                    strokeWidth = 1f,
+                )
+                y += 3f
+            }
+        }
+    }
 }
 
-@Composable
-fun Hairline(modifier: Modifier = Modifier) {
-    Box(
-        modifier
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(Lynq.palette.hairline),
-    )
-}
+// ---------- panels ----------
 
-/** Flat card: 1dp hairline border, no shadow. The only container shape in the app. */
+/** The only container in the app: flat panel, hairline border, 2dp radius. */
 @Composable
-fun LynqCard(
+fun Panel(
     modifier: Modifier = Modifier,
-    contentPadding: Dp = 20.dp,
-    containerColor: Color = MaterialTheme.colorScheme.surface,
+    lit: Boolean = false,
+    border: Color = if (lit) Lynq.pal.lineHi else Lynq.pal.line,
+    contentPadding: Dp = 14.dp,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-        color = containerColor,
-        border = BorderStroke(1.dp, Lynq.palette.hairline),
+        modifier = modifier,
+        shape = MaterialTheme.shapes.small,
+        color = Lynq.pal.panel,
+        border = BorderStroke(1.dp, border),
     ) {
         Column(Modifier.padding(contentPadding), content = content)
     }
 }
 
+/** Section header: pixel label, baseline-aligned trailing slot. */
 @Composable
-fun SectionHeader(
+fun SecHead(
     title: String,
     modifier: Modifier = Modifier,
-    trailing: (@Composable RowScope.() -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.fillMaxSize(),
+        verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Eyebrow(title)
-        trailing?.invoke(this)
+        Text(
+            text = title.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = Lynq.pal.phDim,
+        )
+        trailing?.invoke()
     }
 }
 
-/** Big number + tiny caption. */
+/** Corner-bracket motif: panel + drawn [ ] corners. Signature element. */
 @Composable
-fun StatTile(
-    value: String,
-    label: String,
+fun BracketPanel(
     modifier: Modifier = Modifier,
-    tint: Color = MaterialTheme.colorScheme.onSurface,
+    border: Color = Lynq.pal.line,
+    contentPadding: Dp = 14.dp,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
-    Column(modifier) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.displayMedium,
-            color = tint,
+    val pal = Lynq.pal
+    Box(modifier = modifier) {
+        Panel(
+            modifier = Modifier.fillMaxSize(),
+            lit = true,
+            border = border,
+            contentPadding = contentPadding,
+            content = content,
         )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = Lynq.palette.muted,
-        )
+        Canvas(Modifier.matchParentSize()) {
+            val c = 10.dp.toPx()
+            // top-left corner
+            drawLine(pal.ph, Offset(0f, 1f), Offset(c, 1f), 4f)
+            drawLine(pal.ph, Offset(1f, 0f), Offset(1f, c), 4f)
+            // bottom-right corner
+            drawLine(pal.ph, Offset(size.width - c, size.height - 1f), Offset(size.width, size.height - 1f), 4f)
+            drawLine(pal.ph, Offset(size.width - 1f, size.height - c), Offset(size.width - 1f, size.height), 4f)
+        }
     }
 }
 
+// ---------- tags / status chips ----------
+
+enum class TagTone { OK, WARN, CRIT, NEUTRAL }
+
+/** Pixel status chip: DLV / RLY / SOS / RELAY. */
 @Composable
-fun StatusPill(
-    status: DeliveryStatus,
+fun Tag(
+    text: String,
     modifier: Modifier = Modifier,
-    labelOverride: String? = null,
-    positive: Boolean? = null,
+    tone: TagTone = TagTone.NEUTRAL,
 ) {
-    val palette = Lynq.palette
-    val scheme = MaterialTheme.colorScheme
-    val signalStates = listOf(DeliveryStatus.DELIVERED, DeliveryStatus.RELAYED)
-    val (fg, bg) = when {
-        status == DeliveryStatus.FAILED || status == DeliveryStatus.EXPIRED ->
-            palette.sos to palette.sosSoft
-        positive == true || (positive == null && status in signalStates) ->
-            palette.signal to palette.signal.copy(alpha = 0.12f)
-        else -> scheme.onSurfaceVariant to scheme.surfaceVariant
+    val pal = Lynq.pal
+    val (border, fg) = when (tone) {
+        TagTone.OK -> pal.lineHi to pal.ph
+        TagTone.WARN -> pal.warn to pal.warn
+        TagTone.CRIT -> pal.sos to pal.sos
+        TagTone.NEUTRAL -> pal.line to pal.phDim
     }
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(50),
-        color = bg,
-        contentColor = fg,
+        shape = MaterialTheme.shapes.small,
+        color = Color.Transparent,
+        border = BorderStroke(1.dp, border),
     ) {
         Text(
-            text = (labelOverride ?: status.label).uppercase(),
-            modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
+            text = text.uppercase(),
             style = MaterialTheme.typography.labelSmall,
+            color = fg,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
         )
     }
 }
 
-/** Only meaningful for priority above NORMAL, so NORMAL renders nothing. */
+/** Delivery status mapped to a terminal tag. */
 @Composable
-fun PriorityMark(priority: Priority, modifier: Modifier = Modifier) {
-    if (priority == Priority.NORMAL) return
-    val palette = Lynq.palette
-    Text(
-        text = if (priority == Priority.CRITICAL) "CRITICAL" else "HIGH",
-        modifier = modifier,
-        style = MaterialTheme.typography.labelSmall,
-        color = if (priority == Priority.CRITICAL) palette.sos else palette.warn,
-    )
+fun StatusTag(status: com.sunless.lynq.domain.model.DeliveryStatus) {
+    val (label, tone) = when (status) {
+        com.sunless.lynq.domain.model.DeliveryStatus.DELIVERED -> "DLV" to TagTone.OK
+        com.sunless.lynq.domain.model.DeliveryStatus.RELAYED -> "RLY" to TagTone.NEUTRAL
+        com.sunless.lynq.domain.model.DeliveryStatus.SENT -> "SENT" to TagTone.NEUTRAL
+        com.sunless.lynq.domain.model.DeliveryStatus.PENDING -> "QUEUE" to TagTone.WARN
+        com.sunless.lynq.domain.model.DeliveryStatus.FAILED, com.sunless.lynq.domain.model.DeliveryStatus.EXPIRED ->
+            "FAIL" to TagTone.CRIT
+    }
+    Tag(text = label, tone = tone)
 }
 
-/** `Aarav → Meera → You` */
+// ---------- route trace ----------
+
+/** `YOU > AARAV > KABIR` — pixel, arrows faint. */
 @Composable
 fun RouteTrace(
     route: List<String>,
     modifier: Modifier = Modifier,
-    color: Color = Lynq.palette.muted,
+    highlightLast: Boolean = true,
 ) {
-    Text(
-        text = if (route.isEmpty()) "direct" else route.joinToString("  →  "),
-        modifier = modifier,
-        style = MonoStyle,
-        color = color,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-    )
-}
-
-@Composable
-fun PeerAvatar(
-    name: String,
-    modifier: Modifier = Modifier,
-    size: Dp = 40.dp,
-    highlighted: Boolean = false,
-) {
-    Surface(
-        modifier = modifier.size(size),
-        shape = CircleShape,
-        color = if (highlighted) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            MaterialTheme.colorScheme.surfaceVariant
-        },
-        contentColor = if (highlighted) {
-            MaterialTheme.colorScheme.onPrimary
-        } else {
-            MaterialTheme.colorScheme.onSurface
-        },
-    ) {
-        Box(contentAlignment = Alignment.Center) {
+    val pal = Lynq.pal
+    if (route.isEmpty()) {
+        Text("direct", style = RouteStyle, color = pal.phDim, modifier = modifier)
+        return
+    }
+    Row(modifier = modifier, verticalAlignment = Alignment.Bottom) {
+        route.forEachIndexed { i, hop ->
+            if (i > 0) {
+                Text(
+                    text = ">",
+                    style = RouteStyle,
+                    color = pal.phFaint,
+                    modifier = Modifier.padding(horizontal = 4.dp),
+                )
+            }
+            val last = i == route.lastIndex
             Text(
-                text = name.take(1).uppercase(),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium,
+                text = hop.uppercase(),
+                style = RouteStyle,
+                color = if (last && highlightLast) pal.ph else pal.phDim,
             )
         }
     }
 }
 
-/** Small neutral chip used for categories and meta. */
+// ---------- terminal blocks ----------
+
+/** Square avatar: 1px lit border, pixel initial. Not a circle. */
 @Composable
-fun MetaChip(
-    text: String,
+fun NodeAvatar(
+    name: String,
     modifier: Modifier = Modifier,
-    contentColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    size: Dp = 38.dp,
+    relay: Boolean = false,
+    crit: Boolean = false,
 ) {
+    val pal = Lynq.pal
     Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(50),
-        color = containerColor,
-        contentColor = contentColor,
+        modifier = modifier.size(size),
+        shape = MaterialTheme.shapes.small,
+        color = if (relay) pal.ph else pal.panelHi,
+        contentColor = if (relay) pal.bg else if (crit) pal.sos else pal.ph,
+        border = if (relay) null else BorderStroke(
+            1.dp,
+            if (crit) pal.sos else pal.lineHi,
+        ),
     ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = name.take(1).uppercase(),
+                style = MaterialTheme.typography.titleMedium,
+            )
+        }
+    }
+}
+
+/** Big pixel readout number + tiny caption. */
+@Composable
+fun Readout(
+    value: String,
+    caption: String,
+    modifier: Modifier = Modifier,
+    tint: Color = Lynq.pal.ph,
+) {
+    Column(modifier) {
         Text(
-            text = text,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-            style = MaterialTheme.typography.labelMedium,
+            text = value,
+            style = MaterialTheme.typography.displaySmall,
+            color = tint,
+        )
+        Text(
+            text = caption.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = Lynq.pal.phFaint,
+            modifier = Modifier.padding(top = 5.dp),
         )
     }
 }
+
+// ---------- sysbar / cmdbar ----------
+
+/** Top bar: LYNQ_ wordmark + mesh LED status. Same on every screen. */
+@Composable
+fun SysBar(
+    reachableCount: Int,
+    online: Boolean = true,
+    modifier: Modifier = Modifier,
+) {
+    val pal = Lynq.pal
+    Row(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(start = 16.dp, end = 16.dp, top = 18.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text = "LYNQ_",
+            style = androidx.compose.ui.text.TextStyle(
+                fontFamily = com.sunless.lynq.ui.theme.PixelFont,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                fontSize = 24.sp,
+                letterSpacing = 1.sp,
+            ),
+            color = pal.ph,
+        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .padding(end = 7.dp)
+                    .size(8.dp)
+                    .background(if (online) pal.ph else pal.phFaint, MaterialTheme.shapes.extraSmall),
+            )
+            Text(
+                text = if (online) "MESH:${reachableCount}" else "OFFLINE",
+                style = TerminalStyle,
+                color = pal.phDim,
+            )
+        }
+    }
+}
+
+data class CmdItem(
+    val label: String,
+    val glyph: String,
+    val route: String,
+    val isSos: Boolean = false,
+)

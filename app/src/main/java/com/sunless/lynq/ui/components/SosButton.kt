@@ -12,47 +12,116 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.sunless.lynq.domain.model.DeliveryStatus
 import com.sunless.lynq.ui.theme.Lynq
 
 /**
- * The one button that must never be missed. Full width, solid SOS colour, large text.
- * Callers must still confirm before sending (see EmergencyScreen).
+ * The SOS lever. Full-width, solid red, pixel type — the only solid red
+ * element in the app. Never disabled, never gated.
  */
 @Composable
-fun SosButton(
+fun SosLever(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    label: String = "Send SOS",
-    supporting: String = "Broadcasts to every device in range",
-    enabled: Boolean = true,
+    label: String = "HOLD SOS",
+    supporting: String = "hold 3s · broadcasts to all in range",
 ) {
-    val palette = Lynq.palette
+    val pal = Lynq.pal
     Surface(
         onClick = onClick,
-        enabled = enabled,
         modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        color = palette.sos,
-        contentColor = palette.onSos,
+        shape = MaterialTheme.shapes.small,
+        color = pal.sos,
+        contentColor = pal.onSos,
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 22.dp, vertical = 20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column {
-                Text(text = label, style = MaterialTheme.typography.titleLarge)
-                Text(
-                    text = supporting,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = palette.onSos.copy(alpha = 0.78f),
-                )
-            }
             Text(
-                text = "CRITICAL",
-                style = MaterialTheme.typography.labelSmall,
-                color = palette.onSos.copy(alpha = 0.78f),
+                text = label,
+                style = MaterialTheme.typography.headlineMedium,
+            )
+            Text(
+                text = supporting,
+                style = MaterialTheme.typography.bodySmall,
+                color = pal.onSos.copy(alpha = 0.8f),
+                modifier = Modifier.padding(top = 4.dp),
             )
         }
     }
 }
+
+/**
+ * Hop meter: [####......] — live progress through the TTL budget.
+ */
+@Composable
+fun HopMeter(
+    reached: Int,
+    total: Int,
+    modifier: Modifier = Modifier,
+) {
+    val pal = Lynq.pal
+    val filled = "#".repeat(reached.coerceIn(0, total))
+    val empty = ".".repeat((total - reached).coerceIn(0, total))
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Text(text = "[", style = MaterialTheme.typography.labelLarge, color = pal.phFaint)
+        Text(text = filled, style = MaterialTheme.typography.labelLarge, color = pal.ph)
+        Text(text = empty, style = MaterialTheme.typography.labelLarge, color = pal.phFaint)
+        Text(text = "]", style = MaterialTheme.typography.labelLarge, color = pal.phFaint)
+        Text(
+            text = " $reached/$total",
+            style = MaterialTheme.typography.labelMedium,
+            color = pal.phFaint,
+            modifier = Modifier.padding(start = 8.dp),
+        )
+    }
+}
+
+/**
+ * A hop step in the live SOS tracker: [mark] WHO ....... time
+ */
+@Composable
+fun HopStep(
+    name: String,
+    time: String?,
+    done: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val pal = Lynq.pal
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Surface(
+            shape = MaterialTheme.shapes.small,
+            color = if (done) pal.ph else pal.panel,
+            border = if (done) null else androidx.compose.foundation.BorderStroke(1.dp, pal.lineHi),
+            contentColor = if (done) pal.bg else pal.phDim,
+        ) {
+            Text(
+                text = if (done && name.equals("YOU", true)) "v" else name.take(1).uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.padding(4.dp),
+            )
+        }
+        Text(
+            text = name.uppercase(),
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (done) pal.ph else pal.phDim,
+        )
+        Text(
+            text = time ?: "- -",
+            style = MaterialTheme.typography.labelMedium,
+            color = pal.phFaint,
+            modifier = Modifier.padding(start = 12.dp),
+        )
+    }
+}
+
+/** Delivery status -> tag, kept for screens that show status inline. */
+@Composable
+fun DeliveryTag(status: DeliveryStatus) = StatusTag(status = status)

@@ -2,94 +2,106 @@ package com.sunless.lynq.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.sunless.lynq.R
 
 /**
- * One family (the system sans) with tight display tracking and generous body leading.
- * Big numbers and labels carry the hierarchy — not extra colours or weights.
+ * Three-tier type system:
+ * - Silkscreen (pixel bold) = identity: titles, buttons, tags, readouts, names
+ * - JetBrains Mono = reading + data: bodies, IDs, timestamps, hops
+ * - VT323 = CRT flavor only: boot log, ASCII topology art
  */
+val PixelFont = FontFamily(
+    Font(R.font.silkscreen_bold, FontWeight.Bold),
+)
+
+val MonoFont = FontFamily(
+    Font(R.font.jetbrainsmono_regular, FontWeight.Normal),
+    Font(R.font.jetbrainsmono_bold, FontWeight.Bold),
+)
+
+val TerminalFont = FontFamily(
+    Font(R.font.vt323_regular, FontWeight.Normal),
+)
+
 val LynqTypography = Typography(
-    displayLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Light,
-        fontSize = 56.sp,
-        lineHeight = 58.sp,
-        letterSpacing = (-2).sp,
+    // ---- pixel tier: identity ----
+    displaySmall = TextStyle(          // big readouts (34px pixel)
+        fontFamily = PixelFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 32.sp,
+        lineHeight = 34.sp,
     ),
-    displayMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Light,
-        fontSize = 40.sp,
-        lineHeight = 44.sp,
-        letterSpacing = (-1.2).sp,
+    headlineMedium = TextStyle(        // screen titles
+        fontFamily = PixelFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 21.sp,
+        lineHeight = 28.sp,
+        letterSpacing = 0.5.sp,
     ),
-    headlineMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 26.sp,
-        lineHeight = 32.sp,
-        letterSpacing = (-0.4).sp,
+    titleMedium = TextStyle(           // names — people are headings, stay pixel
+        fontFamily = PixelFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 13.sp,
+        lineHeight = 18.sp,
+        letterSpacing = 0.5.sp,
     ),
-    titleLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Medium,
-        fontSize = 20.sp,
-        lineHeight = 26.sp,
+    labelSmall = TextStyle(             // tags, status chips, section heads
+        fontFamily = PixelFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 10.sp,
+        lineHeight = 14.sp,
+        letterSpacing = 1.sp,
     ),
-    titleMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Medium,
-        fontSize = 16.sp,
+    // ---- mono tier: reading + data ----
+    bodyLarge = TextStyle(              // message bodies
+        fontFamily = MonoFont,
+        fontWeight = FontWeight.Normal,
+        fontSize = 15.sp,
         lineHeight = 22.sp,
     ),
-    bodyLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
+    bodyMedium = TextStyle(             // previews, notes, descriptions
+        fontFamily = MonoFont,
         fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
+        fontSize = 13.5.sp,
+        lineHeight = 20.sp,
     ),
-    bodyMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
+    bodySmall = TextStyle(              // readable meta
+        fontFamily = MonoFont,
         fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        lineHeight = 21.sp,
+        fontSize = 12.5.sp,
+        lineHeight = 17.sp,
     ),
-    bodySmall = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Normal,
-        fontSize = 13.sp,
-        lineHeight = 19.sp,
-    ),
-    labelLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Medium,
+    labelLarge = TextStyle(             // buttons already pixel via .pix styles; this is mono buttons
+        fontFamily = MonoFont,
+        fontWeight = FontWeight.Bold,
         fontSize = 14.sp,
         lineHeight = 18.sp,
     ),
-    labelMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Medium,
+    labelMedium = TextStyle(            // ids, timestamps, hop counts
+        fontFamily = MonoFont,
+        fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
         lineHeight = 16.sp,
-        letterSpacing = 0.2.sp,
-    ),
-    // Used for section eyebrows, always rendered uppercase in the UI.
-    labelSmall = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 15.sp,
-        letterSpacing = 1.4.sp,
     ),
 )
 
-/** Device IDs, fingerprints, hop counts, timestamps. */
-val MonoStyle = TextStyle(
-    fontFamily = FontFamily.Monospace,
+/** VT323 CRT flavor: boot log lines, ASCII art. */
+val TerminalStyle = TextStyle(
+    fontFamily = TerminalFont,
     fontWeight = FontWeight.Normal,
-    fontSize = 12.sp,
-    lineHeight = 17.sp,
-    letterSpacing = 0.4.sp,
+    fontSize = 16.sp,
+    lineHeight = 24.sp,
+)
+
+/** Pixel route trace: YOU > AARAV > KABIR */
+val RouteStyle = TextStyle(
+    fontFamily = PixelFont,
+    fontWeight = FontWeight.Bold,
+    fontSize = 10.sp,
+    lineHeight = 14.sp,
+    letterSpacing = 0.5.sp,
 )

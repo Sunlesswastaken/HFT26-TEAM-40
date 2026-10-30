@@ -2,20 +2,21 @@
 
 ## Done
 
-- Project skeleton: Gradle, Compose, theme (light + dark), version catalog.
+- Project skeleton: Gradle, Compose, terminal theme, version catalog.
 - Domain models matching AGENTS.md (Message, Peer, Priority, DeliveryStatus).
-- Reusable components: cards, pills, route traces, avatars, mesh graph, SOS button, app shell.
-- Demo data for UI development (`demo/DemoData.kt`).
-- UI direction fixed: **minimal & clean** — tokens documented in `docs/design/DESIGN.md`.
-- HTML mockups of all 5 screens validated at 390×844 (light, dark, tracking, open-thread states):
-  `docs/design/mockups/`, screenshots in `shots/`.
-- All 5 screens ported to Compose, wired to navigation + MainActivity; `compileDebugKotlin` green.
+- **UI direction: black/green field terminal** (see `docs/design/DESIGN.md`):
+  - Mockups validated at 390×844, all screens + states, clean checks
+  - Two-tier type: Silkscreen (identity) + JetBrains Mono (reading/data) + VT323 (CRT flavor)
+  - All five screens ported to Compose; old minimal-theme screens deleted
+  - CRT scanline overlay, ASCII mesh topology, corner brackets, SMA attrs
+- Fonts bundled as app resources (OFL: Silkscreen, VT323, JetBrains Mono NF)
+- `compileDebugKotlin` green, `assembleDebug` green
 
 ## In progress
 
-- On-device visual pass (screenshots come from tooling checks only this session — no image-capable reviewer available).
-- Wire screens to the engine once the router lands (screens already take data via parameters; `DemoData` swap point is documented).
+- On-device visual pass (waiting for phone via adb)
 
 ## Blocked
 
-- None.
+- Mesh engine: port plan documented (MeshRouter/SeenSet/Wire CBOR/ForwardSync
+  from Knit, GPL-3.0 applies) — not started. UI first per team call.
