@@ -24,6 +24,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Send
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.DoneAll
+import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -71,17 +75,21 @@ fun MessagesScreen(navController: NavHostController) {
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = 16.dp),
-        ) {
-            if (openPeerId == null) {
+        if (openPeerId == null) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 16.dp),
+            ) {
                 ThreadList(onOpen = { openPeerId = it })
-            } else {
-                OpenThreadView(peerId = openPeerId!!, onBack = { openPeerId = null })
             }
+        } else {
+            OpenThreadView(
+                peerId = openPeerId!!,
+                onBack = { openPeerId = null },
+                modifier = Modifier.weight(1f),
+            )
         }
 
         CmdBar(
@@ -182,27 +190,30 @@ private fun ThreadList(onOpen: (String) -> Unit) {
 }
 
 @Composable
-private fun OpenThreadView(peerId: String, onBack: () -> Unit) {
+private fun OpenThreadView(
+    peerId: String,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val pal = Lynq.pal
     val peer = DemoData.peers.firstOrNull { it.id == peerId } ?: return
     var messageText by remember { mutableStateOf("") }
+    val scrollState = rememberScrollState()
 
-    // Apple Style Conversation Navigation Bar
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = Color(0xFF161618),
-        border = BorderStroke(0.5.dp, pal.border),
+    Column(
+        modifier = modifier.fillMaxWidth(),
     ) {
+        // Apple Style Seamless Conversation Header (No card background or border)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+                .padding(horizontal = 8.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             IconButton(
                 onClick = onBack,
-                modifier = Modifier.size(34.dp),
+                modifier = Modifier.size(36.dp),
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
@@ -221,95 +232,111 @@ private fun OpenThreadView(peerId: String, onBack: () -> Unit) {
                     color = pal.textPrimary,
                 )
                 Text(
-                    text = if (peer.hops == 1) "Direct · End-to-End Encrypted" else "${peer.hops} Hops · End-to-End Encrypted",
+                    text = if (peer.hops == 1) "Direct Link · Encrypted" else "${peer.hops} Hops Relay · Encrypted",
                     style = AppleCaption,
                     color = pal.accentBlue,
                 )
             }
-
-            StatusChip(status = DeliveryStatus.DELIVERED)
         }
-    }
 
-    // Message Bubbles Container
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-    ) {
-        data class DemoChat(
-            val isMine: Boolean,
-            val body: String,
-            val time: Long,
-            val status: DeliveryStatus,
-            val route: List<String>,
-        )
+        AppleDivider()
 
-        val now = System.currentTimeMillis()
-        val chatList = listOf(
-            DemoChat(false, "Are you all safe? Cellular and internet are completely down here.", now - 45 * 60_000, DeliveryStatus.DELIVERED, listOf(peer.name, "You")),
-            DemoChat(true, "We're safe. We formed a mesh at the east shelter with battery packs.", now - 44 * 60_000, DeliveryStatus.DELIVERED, listOf("You", peer.name)),
-            DemoChat(false, "Got it, two more people just connected through Aarav's phone.", now - 8 * 60_000, DeliveryStatus.DELIVERED, listOf(peer.name, "You")),
-            DemoChat(true, "Keep Lynq running in background. All packets will forward seamlessly.", now - 6 * 60_000, DeliveryStatus.RELAYED, listOf("You", "Meera", peer.name)),
-        )
+        // Message Bubbles Container (takes available space, scrolls smoothly)
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            data class DemoChat(
+                val isMine: Boolean,
+                val body: String,
+                val time: Long,
+                val status: DeliveryStatus,
+                val route: List<String>,
+            )
 
-        chatList.forEach { chat ->
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                horizontalAlignment = if (chat.isMine) Alignment.End else Alignment.Start,
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(
-                        topStart = 18.dp,
-                        topEnd = 18.dp,
-                        bottomStart = if (chat.isMine) 18.dp else 4.dp,
-                        bottomEnd = if (chat.isMine) 4.dp else 18.dp,
-                    ),
-                    color = if (chat.isMine) pal.accentBlue else pal.surfaceElevated,
+            val now = System.currentTimeMillis()
+            val chatList = listOf(
+                DemoChat(false, "Are you all safe? Cellular and internet are completely down here.", now - 45 * 60_000, DeliveryStatus.DELIVERED, listOf(peer.name, "You")),
+                DemoChat(true, "We're safe. We formed a mesh at the east shelter with battery packs.", now - 44 * 60_000, DeliveryStatus.DELIVERED, listOf("You", peer.name)),
+                DemoChat(false, "Got it, two more people just connected through Aarav's phone.", now - 8 * 60_000, DeliveryStatus.DELIVERED, listOf(peer.name, "You")),
+                DemoChat(true, "Keep Lynq running in background. All packets will forward seamlessly.", now - 6 * 60_000, DeliveryStatus.DELIVERED, listOf("You", "Meera", peer.name)),
+            )
+
+            chatList.forEach { chat ->
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = if (chat.isMine) Alignment.End else Alignment.Start,
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(horizontal = 14.dp, vertical = 10.dp)
-                            .widthIn(max = 280.dp),
+                    Surface(
+                        shape = RoundedCornerShape(
+                            topStart = 18.dp,
+                            topEnd = 18.dp,
+                            bottomStart = if (chat.isMine) 18.dp else 4.dp,
+                            bottomEnd = if (chat.isMine) 4.dp else 18.dp,
+                        ),
+                        color = if (chat.isMine) pal.accentBlue else pal.surfaceElevated,
                     ) {
-                        Text(
-                            text = chat.body,
-                            style = AppleBody,
-                            color = Color.White,
-                        )
-                        Spacer(Modifier.height(3.dp))
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
+                        Column(
+                            modifier = Modifier
+                                .padding(horizontal = 14.dp, vertical = 10.dp)
+                                .widthIn(max = 280.dp),
                         ) {
                             Text(
-                                text = chat.time.asClock(),
-                                style = AppleCaption,
-                                color = if (chat.isMine) Color.White.copy(alpha = 0.7f) else pal.textMuted,
+                                text = chat.body,
+                                style = AppleBody,
+                                color = Color.White,
                             )
-                            if (chat.isMine) {
-                                StatusChip(status = chat.status)
+                            Spacer(Modifier.height(4.dp))
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = chat.time.asClock(),
+                                    style = AppleCaption,
+                                    color = if (chat.isMine) Color.White.copy(alpha = 0.75f) else pal.textMuted,
+                                )
+                                if (chat.isMine) {
+                                    val (tickIcon, tickColor) = when (chat.status) {
+                                        DeliveryStatus.DELIVERED, DeliveryStatus.RELAYED ->
+                                            Icons.Rounded.DoneAll to Color.White.copy(alpha = 0.95f)
+                                        DeliveryStatus.SENT ->
+                                            Icons.Rounded.Check to Color.White.copy(alpha = 0.75f)
+                                        DeliveryStatus.PENDING ->
+                                            Icons.Rounded.Schedule to Color.White.copy(alpha = 0.6f)
+                                        DeliveryStatus.FAILED, DeliveryStatus.EXPIRED ->
+                                            Icons.Rounded.ErrorOutline to pal.emergencyRed
+                                    }
+                                    Icon(
+                                        imageVector = tickIcon,
+                                        contentDescription = chat.status.name,
+                                        tint = tickColor,
+                                        modifier = Modifier.size(14.dp),
+                                    )
+                                }
                             }
                         }
                     }
-                }
 
-                // Route breadcrumb
-                Spacer(Modifier.height(2.dp))
-                ModernRouteTrace(route = chat.route)
+                    // Route breadcrumb
+                    Spacer(Modifier.height(2.dp))
+                    ModernRouteTrace(route = chat.route)
+                }
             }
         }
 
-        Spacer(Modifier.height(18.dp))
-
-        // Apple Style Message Input Capsule
+        // Apple Style Message Input Capsule - Docked at the bottom
         Surface(
             shape = RoundedCornerShape(24.dp),
             color = pal.surface,
             border = BorderStroke(0.5.dp, pal.border),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 6.dp),
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
