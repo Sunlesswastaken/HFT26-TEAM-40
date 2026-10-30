@@ -105,7 +105,6 @@ fun HoldToSosButton(
         label = "pulseAlpha",
     )
 
-    val percent = (progress.value * 100).toInt()
     val secondsRemaining = ((1f - progress.value) * (holdDurationMillis / 1000f)).coerceAtLeast(0f)
 
     Surface(
@@ -216,33 +215,12 @@ fun HoldToSosButton(
                 }
 
                 Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(
-                            text = if (isHolding) "Hold for SOS" else "Hold 3s for SOS",
-                            style = AppleHeadline,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                        )
-
-                        if (isHolding) {
-                            Surface(
-                                shape = RoundedCornerShape(100.dp),
-                                color = Color.White.copy(alpha = 0.25f),
-                            ) {
-                                Text(
-                                    text = "$percent%",
-                                    style = AppleCaption,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                                )
-                            }
-                        }
-                    }
+                    Text(
+                        text = if (isHolding) "Hold for SOS" else "Hold 3s for SOS",
+                        style = AppleHeadline,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                    )
 
                     Spacer(Modifier.height(2.dp))
                     Text(
