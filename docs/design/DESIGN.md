@@ -26,10 +26,11 @@ Type — **two-tier system**:
 - **Silkscreen** (pixel, OFL) = identity tier: screen titles, section heads,
   buttons, tags, readout numbers, route traces, and **names** (people are
   headings, so they stay pixel)
-- **Sans** (system) = reading tier: message bodies, note input, previews,
-  descriptions, explainer copy — anything longer than a label
-- **VT323** (terminal, OFL) = flavor only: boot log, ASCII topology glyph art,
-  timestamps/hop counts/IDs (data, not prose)
+- **JetBrains Mono Nerd Font** (OFL) = reading tier: message bodies, note
+  input, previews, descriptions, IDs, timestamps, hop counts — a real code
+  font, so long-form reading stays comfortable while keeping terminal DNA
+- **VT323** (terminal, OFL) = CRT flavor only: boot log and ASCII topology
+  glyph art — the only two places a phosphor screen is being emulated
 
 Fonts bundled in `docs/design/mockups/fonts/`.
 

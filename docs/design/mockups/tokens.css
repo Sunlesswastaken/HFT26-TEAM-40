@@ -16,6 +16,18 @@
   font-weight: 400;
   font-display: swap;
 }
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("fonts/JetBrainsMonoNerdFont-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("fonts/JetBrainsMonoNerdFont-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-display: swap;
+}
 
 :root {
   /* surfaces — near-black, never #000 */
@@ -35,7 +47,8 @@
 
   --pix: "Silkscreen", monospace;
   --term: "VT323", monospace;
-  --sans: "Inter", "Segoe UI", "Roboto", "Helvetica Neue", system-ui, sans-serif;
+  --mono: "JetBrains Mono", monospace;   /* reading tier — real code font */
+  --sans: var(--mono);
 
   --r: 2px;                 /* ONE radius: near-sharp, terminal-true */
   --gutter: 16px;
@@ -109,8 +122,8 @@ body::before {
 }
 .body-s { font-size: 16px; }   /* readable body — sans */
 .body-xs { font-size: 14px; color: var(--ph-faint); } /* readable meta — sans */
-.term-s { font-family: var(--term); font-size: 20px; }   /* flavor: log lines */
-.term-xs { font-family: var(--term); font-size: 17px; color: var(--ph-faint); } /* flavor: node ids, ascii meta */
+.term-s { font-family: var(--mono); font-size: 16px; }   /* data lines */
+.term-xs { font-family: var(--mono); font-size: 13.5px; color: var(--ph-faint); } /* ids, timestamps, hops */
 .dim { color: var(--ph-dim); }
 .faint { color: var(--ph-faint); }
 .who {                  /* names/labels: pixel, scannable */
@@ -272,8 +285,8 @@ a.row:focus-visible { outline: 2px solid var(--ph); outline-offset: -2px; }
 .sos-btn:active { transform: translateY(1px); }
 .sos-btn .sub {
   display: block;
-  font-family: var(--term);
-  font-size: 16px;
+  font-family: var(--mono);
+  font-size: 14px;
   letter-spacing: 0.5px;
   text-transform: none;
   margin-top: 5px;
@@ -345,7 +358,7 @@ a.row:focus-visible { outline: 2px solid var(--ph); outline-offset: -2px; }
 }
 .cmdbar .cmd.active { color: var(--bg); background: var(--ph); }
 .cmdbar .cmd.sos-active { color: var(--sos); }
-.cmdbar .cmd .glyph { font-family: var(--term); font-size: 20px; line-height: 1; }
+.cmdbar .cmd .glyph { font-family: var(--mono); font-size: 17px; font-weight: 700; line-height: 1; }
 .cmdbar .cmd.sos .glyph { color: inherit; }
 .cmdbar .cmd.sos { border: 1px solid var(--sos); color: var(--sos); }
 .cmdbar .cmd.sos.active { background: var(--sos); color: #140504; }
