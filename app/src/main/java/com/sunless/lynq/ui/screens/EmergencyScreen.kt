@@ -1,174 +1,470 @@
 package com.sunless.lynq.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Emergency
+import androidx.compose.material.icons.rounded.LocalFireDepartment
+import androidx.compose.material.icons.rounded.LocalHospital
+import androidx.compose.material.icons.rounded.LocationOn
+import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.sunless.lynq.demo.DemoData
-import com.sunless.lynq.ui.components.BracketPanel
+import com.sunless.lynq.domain.model.DeliveryStatus
+import com.sunless.lynq.ui.components.AppleDivider
+import com.sunless.lynq.ui.components.AppleGroupedCard
 import com.sunless.lynq.ui.components.CmdBar
 import com.sunless.lynq.ui.components.HopMeter
 import com.sunless.lynq.ui.components.HopStep
-import com.sunless.lynq.ui.components.NodeAvatar
-import com.sunless.lynq.ui.components.Panel
-import com.sunless.lynq.ui.components.RouteTrace
-import com.sunless.lynq.ui.components.SecHead
-import com.sunless.lynq.ui.components.SosLever
-import com.sunless.lynq.ui.components.StatusTag
-import com.sunless.lynq.ui.components.SysBar
-import com.sunless.lynq.ui.components.Tag
-import com.sunless.lynq.ui.components.TagTone
+import com.sunless.lynq.ui.components.ModernRouteTrace
+import com.sunless.lynq.ui.components.SectionHeader
+import com.sunless.lynq.ui.components.StatusChip
+import com.sunless.lynq.ui.components.TopBar
 import com.sunless.lynq.ui.navigation.Screen
 import com.sunless.lynq.ui.navigation.navigateTab
+import com.sunless.lynq.ui.theme.AppleBody
+import com.sunless.lynq.ui.theme.AppleCaption
+import com.sunless.lynq.ui.theme.AppleFootnote
+import com.sunless.lynq.ui.theme.AppleHeadline
+import com.sunless.lynq.ui.theme.AppleSubhead
+import com.sunless.lynq.ui.theme.AppleTitle2
 import com.sunless.lynq.ui.theme.Lynq
-import com.sunless.lynq.util.asClock
+import com.sunless.lynq.ui.theme.TechCodeStyle
 import com.sunless.lynq.util.asRelative
 
-private val CATEGORIES = listOf("Medical", "Fire", "Rescue", "Other")
+private data class CategoryItem(val name: String, val icon: ImageVector)
+
+private val CATEGORIES = listOf(
+    CategoryItem("Medical", Icons.Rounded.LocalHospital),
+    CategoryItem("Fire", Icons.Rounded.LocalFireDepartment),
+    CategoryItem("Trapped", Icons.Rounded.Emergency),
+    CategoryItem("Threat", Icons.Rounded.Shield),
+)
 
 @Composable
 fun EmergencyScreen(navController: NavHostController) {
     val pal = Lynq.pal
-    var category by rememberSaveable { mutableStateOf(CATEGORIES.first()) }
+    var selectedCategory by rememberSaveable { mutableStateOf(CATEGORIES.first().name) }
     var note by rememberSaveable { mutableStateOf("") }
     var shareLocation by rememberSaveable { mutableStateOf(true) }
-    var sending by rememberSaveable { mutableStateOf(false) }
+    var isBroadcasting by rememberSaveable { mutableStateOf(false) }
 
-    // System back gesture returns from live tracking to the compose view.
-    androidx.activity.compose.BackHandler(enabled = sending) {
-        sending = false
+    androidx.activity.compose.BackHandler(enabled = isBroadcasting) {
+        isBroadcasting = false
     }
+
+    val transition = rememberInfiniteTransition(label = "sosPulse")
+    val pulseAlpha by transition.animateFloat(
+        initialValue = 0.2f,
+        targetValue = 0.6f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "pulseAlpha",
+    )
 
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 16.dp),
+                .padding(bottom = 24.dp),
         ) {
-            SysBar(reachableCount = DemoData.reachableCount)
+            TopBar(reachableCount = DemoData.reachableCount, title = "Emergency SOS")
 
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 Text(
-                    text = "Emergency\nCentre",
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.padding(top = 18.dp),
+                    text = "Offline peer-to-peer broadcast · Unconditionally prioritised",
+                    style = AppleSubhead,
+                    color = pal.textSecondary,
+                    modifier = Modifier.padding(bottom = 18.dp),
                 )
 
-                if (!sending) {
-                    // category
-                    Spacer(Modifier.height(24.dp))
-                    SecHead("Category")
-                    FlowChips(CATEGORIES, selected = category, onSelect = { category = it })
+                if (!isBroadcasting) {
+                    // Category Selection Pills
+                    SectionHeader(title = "Emergency Type")
+                    Spacer(Modifier.height(10.dp))
 
-                    // note
-                    Spacer(Modifier.height(24.dp))
-                    SecHead("Note", trailing = {
-                        Text("optional", style = MaterialTheme.typography.bodySmall, color = pal.phFaint)
-                    })
-                    Surface(
-                        shape = MaterialTheme.shapes.small,
-                        color = pal.bg,
-                        border = BorderStroke(1.dp, pal.line),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 10.dp),
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Text(
-                            text = if (note.isBlank()) "what's happening_" else note,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = if (note.isBlank()) pal.phFaint else pal.ph,
-                            modifier = Modifier.padding(12.dp),
-                        )
-                    }
-
-                    // location
-                    Spacer(Modifier.height(24.dp))
-                    SecHead("Options")
-                    Panel(modifier = Modifier.padding(top = 10.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f)) {
-                                Text("Attach location", style = MaterialTheme.typography.bodyLarge, color = pal.ph)
-                                Text(
-                                    "works without it · 12.9716,77.5946",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = pal.phFaint,
-                                )
+                        CATEGORIES.forEach { cat ->
+                            val selected = cat.name == selectedCategory
+                            Surface(
+                                onClick = { selectedCategory = cat.name },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(16.dp),
+                                color = if (selected) pal.emergencyRed else pal.surface,
+                                border = if (selected) null else BorderStroke(0.5.dp, pal.border),
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(vertical = 14.dp, horizontal = 4.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center,
+                                ) {
+                                    Icon(
+                                        imageVector = cat.icon,
+                                        contentDescription = cat.name,
+                                        tint = if (selected) Color.White else pal.textSecondary,
+                                        modifier = Modifier.size(22.dp),
+                                    )
+                                    Spacer(Modifier.height(6.dp))
+                                    Text(
+                                        text = cat.name,
+                                        style = AppleFootnote,
+                                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                                        color = if (selected) Color.White else pal.textPrimary,
+                                    )
+                                }
                             }
-                            Toggle(checked = shareLocation, onChange = { shareLocation = it })
                         }
                     }
 
-                    // the lever — never gated
-                    SosLever(
-                        onClick = { sending = true },
-                        modifier = Modifier.padding(top = 24.dp),
-                    )
-                } else {
-                    TrackingCard(category, note)
-                }
+                    Spacer(Modifier.height(20.dp))
 
-                // received alerts
-                Spacer(Modifier.height(26.dp))
-                SecHead("Received")
-                DemoData.alerts.forEachIndexed { i, alert ->
-                    if (i > 0) Spacer(Modifier.height(8.dp))
-                    Surface(
-                        shape = MaterialTheme.shapes.small,
-                        color = pal.panel,
-                        border = BorderStroke(1.dp, pal.line),
-                    ) {
+                    // Location Card
+                    AppleGroupedCard {
                         Row(
-                            modifier = Modifier.padding(12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            NodeAvatar(name = alert.senderName, crit = true)
-                            Column(modifier = Modifier.weight(1f)) {
-                                Row(verticalAlignment = Alignment.Bottom) {
-                                    Text(
-                                        text = alert.senderName.uppercase(),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = pal.sos,
-                                    )
-                                    Tag("SOS", Modifier.padding(start = 8.dp), TagTone.CRIT)
-                                    Spacer(Modifier.weight(1f))
-                                    Text(
-                                        text = alert.createdAt.asRelative(),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = pal.phFaint,
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .background(pal.surfaceElevated, CircleShape),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.LocationOn,
+                                        contentDescription = null,
+                                        tint = pal.accentBlue,
+                                        modifier = Modifier.size(18.dp),
                                     )
                                 }
+                                Column {
+                                    Text(
+                                        text = "Share Location",
+                                        style = AppleHeadline,
+                                        color = pal.textPrimary,
+                                    )
+                                    Text(
+                                        text = if (shareLocation) "19.0760° N, 72.8777° E (±4m)" else "Location hidden",
+                                        style = AppleFootnote,
+                                        color = pal.textSecondary,
+                                    )
+                                }
+                            }
+
+                            Switch(
+                                checked = shareLocation,
+                                onCheckedChange = { shareLocation = it },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.White,
+                                    checkedTrackColor = pal.accentGreen,
+                                    uncheckedThumbColor = pal.textMuted,
+                                    uncheckedTrackColor = pal.surfaceElevated,
+                                ),
+                            )
+                        }
+
+                        AppleDivider()
+
+                        // Notes Field
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            BasicTextField(
+                                value = note,
+                                onValueChange = { note = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                textStyle = AppleBody.copy(color = pal.textPrimary),
+                                cursorBrush = SolidColor(pal.accentBlue),
+                                decorationBox = { innerTextField ->
+                                    if (note.isEmpty()) {
+                                        Text(
+                                            text = "Add details (injuries, floor, hazards)…",
+                                            style = AppleBody,
+                                            color = pal.textMuted,
+                                        )
+                                    }
+                                    innerTextField()
+                                },
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(24.dp))
+
+                    // Apple Emergency SOS Broadcast Trigger Button
+                    Surface(
+                        onClick = { isBroadcasting = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        color = pal.emergencyRed,
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 18.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Emergency,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(22.dp),
+                                )
+                                Text(
+                                    text = "Send Emergency SOS",
+                                    style = AppleHeadline,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                )
+                            }
+                            Spacer(Modifier.height(3.dp))
+                            Text(
+                                text = "Instantly floods across all reachable phones",
+                                style = AppleCaption,
+                                color = Color.White.copy(alpha = 0.85f),
+                            )
+                        }
+                    }
+                } else {
+                    // LIVE ACTIVE BROADCAST STATE
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        color = pal.surface,
+                        border = BorderStroke(1.dp, pal.emergencyRed),
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(12.dp)
+                                            .background(pal.emergencyRed, CircleShape)
+                                            .border(4.dp, pal.emergencyRed.copy(alpha = pulseAlpha), CircleShape),
+                                    )
+                                    Text(
+                                        text = "SOS BROADCASTING",
+                                        style = AppleHeadline,
+                                        fontWeight = FontWeight.Bold,
+                                        color = pal.emergencyRed,
+                                    )
+                                }
+
+                                Surface(
+                                    shape = RoundedCornerShape(100.dp),
+                                    color = pal.emergencyRed.copy(alpha = 0.15f),
+                                ) {
+                                    Text(
+                                        text = "CRITICAL",
+                                        style = AppleCaption,
+                                        color = pal.emergencyRed,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                    )
+                                }
+                            }
+
+                            Spacer(Modifier.height(14.dp))
+
+                            Text(
+                                text = "Type: $selectedCategory Emergency",
+                                style = AppleHeadline,
+                                color = pal.textPrimary,
+                            )
+                            if (note.isNotBlank()) {
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    text = "\"$note\"",
+                                    style = AppleFootnote,
+                                    color = pal.textSecondary,
+                                )
+                            }
+                            if (shareLocation) {
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    text = "Location: 19.0760° N, 72.8777° E (Shared)",
+                                    style = AppleCaption,
+                                    color = pal.accentBlue,
+                                )
+                            }
+
+                            Spacer(Modifier.height(18.dp))
+                            AppleDivider()
+                            Spacer(Modifier.height(14.dp))
+
+                            // Live Multi-hop steps
+                            Text(
+                                text = "Relay Pathway",
+                                style = AppleFootnote,
+                                color = pal.textSecondary,
+                                fontWeight = FontWeight.Medium,
+                            )
+                            Spacer(Modifier.height(8.dp))
+
+                            HopStep("Origin (You)", "Just now", done = true)
+                            HopStep("Hop 1: Aarav (Relay)", "1s ago", done = true)
+                            HopStep("Hop 2: Kabir (Relay)", "2s ago", done = true)
+                            HopStep("Hop 3: Priya (Recipient)", null, done = false)
+
+                            Spacer(Modifier.height(16.dp))
+                            HopMeter(reached = 3, total = 6)
+
+                            Spacer(Modifier.height(20.dp))
+
+                            // Cancel / Resolve button
+                            Button(
+                                onClick = { isBroadcasting = false },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(14.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = pal.surfaceElevated,
+                                    contentColor = pal.textPrimary,
+                                ),
+                            ) {
+                                Text(
+                                    text = "Cancel SOS Broadcast",
+                                    style = AppleSubhead,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.padding(vertical = 4.dp),
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(26.dp))
+
+                // Alert History
+                SectionHeader(title = "Alert History")
+                Spacer(Modifier.height(10.dp))
+
+                AppleGroupedCard {
+                    DemoData.alerts.forEachIndexed { index, alert ->
+                        if (index > 0) AppleDivider()
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .background(pal.emergencyRed.copy(alpha = 0.15f), CircleShape),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Warning,
+                                    contentDescription = null,
+                                    tint = pal.emergencyRed,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            }
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = alert.senderName,
+                                        style = AppleHeadline,
+                                        color = pal.textPrimary,
+                                    )
+                                    Text(
+                                        text = alert.createdAt.asRelative(),
+                                        style = AppleCaption,
+                                        color = pal.textMuted,
+                                    )
+                                }
+                                Spacer(Modifier.height(2.dp))
                                 Text(
                                     text = alert.body,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = pal.phDim,
+                                    style = AppleFootnote,
+                                    color = pal.textSecondary,
+                                    maxLines = 1,
                                 )
-                                RouteTrace(
-                                    route = alert.routeHistory,
-                                    modifier = Modifier.padding(top = 4.dp),
-                                )
+                                Spacer(Modifier.height(4.dp))
+                                ModernRouteTrace(route = alert.routeHistory)
                             }
                         }
                     }
@@ -180,91 +476,5 @@ fun EmergencyScreen(navController: NavHostController) {
             currentRoute = Screen.Emergency.route,
             onSelect = { navController.navigateTab(it) },
         )
-    }
-}
-
-@Composable
-private fun FlowChips(options: List<String>, selected: String, onSelect: (String) -> Unit) {
-    val pal = Lynq.pal
-    Column(
-        modifier = Modifier.padding(top = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        options.chunked(2).forEach { rowOptions ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                rowOptions.forEach { opt ->
-                    val sel = opt == selected
-                    Surface(
-                        onClick = { onSelect(opt) },
-                        shape = MaterialTheme.shapes.small,
-                        color = if (sel) pal.ph else androidx.compose.ui.graphics.Color.Transparent,
-                        contentColor = if (sel) pal.bg else pal.phDim,
-                        border = if (sel) null else BorderStroke(1.dp, pal.line),
-                    ) {
-                        Text(
-                            text = opt.uppercase(),
-                            style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-/** Terminal square toggle. */
-@Composable
-private fun Toggle(checked: Boolean, onChange: (Boolean) -> Unit) {
-    val pal = Lynq.pal
-    Surface(
-        onClick = { onChange(!checked) },
-        shape = MaterialTheme.shapes.small,
-        color = if (checked) pal.panelHi else pal.panel,
-        border = BorderStroke(1.dp, pal.lineHi),
-        modifier = Modifier.size(width = 44.dp, height = 24.dp),
-    ) {
-        Box(contentAlignment = if (checked) Alignment.CenterEnd else Alignment.CenterStart) {
-            Box(
-                modifier = Modifier
-                    .padding(3.dp)
-                    .size(16.dp)
-                    .background(if (checked) pal.ph else pal.phFaint, MaterialTheme.shapes.small),
-            )
-        }
-    }
-}
-
-@Composable
-private fun TrackingCard(category: String, note: String) {
-    val pal = Lynq.pal
-    val hops = listOf("You", "Aarav", "Kabir", "Priya")
-    val reached = 3
-
-    Spacer(Modifier.height(24.dp))
-    SecHead("SOS ${hops.hashCode().toString(16).take(4)}", trailing = { StatusTag(com.sunless.lynq.domain.model.DeliveryStatus.RELAYED) })
-    BracketPanel(
-        modifier = Modifier.padding(top = 10.dp),
-        border = pal.sos,
-    ) {
-        Text(
-            text = "${category.uppercase()} - ${if (note.isBlank()) "no note" else note}",
-            style = MaterialTheme.typography.bodyLarge,
-            color = pal.sos,
-        )
-        Text(
-            text = "sent ${System.currentTimeMillis().asClock()} · loc attached · ttl 6",
-            style = MaterialTheme.typography.labelMedium,
-            color = pal.phFaint,
-            modifier = Modifier.padding(top = 4.dp),
-        )
-        hops.forEachIndexed { i, hop ->
-            HopStep(
-                name = hop,
-                time = if (i < reached) "18:42:0${i + 3}" else null,
-                done = i < reached,
-            )
-        }
-        HopMeter(reached = reached, total = 6, modifier = Modifier.padding(top = 10.dp))
     }
 }

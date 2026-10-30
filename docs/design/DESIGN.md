@@ -1,92 +1,72 @@
-# Lynq UI design — Black & Green Field Terminal
+# Lynq UI Design — Apple Minimalist & Obsidian Knowledge Graph
 
-Status: mockups validated (all screens + states), Compose port pending.
+Status: Redesigned and verified on real device at 390×844.
 
-## North star
+## 1. North Star: "Apple Simplicity, Obsidian Mesh, Zero Noise"
 
-A field instrument, not a chat app: near-black phosphor CRT, one green,
-pixel type for identity, ASCII motifs for the mesh. Emergency-grade
-readability at arm's length.
+Lynq is an offline-first emergency mesh communication tool. The interface is refined, quiet, and minimalist—built according to Apple iOS Human Interface Guidelines and Oil-UI principles. No noisy borders, no uppercase monospace shouting, no unnecessary boxes. Every element is deliberate and legible under stress.
 
-## Tokens (`docs/design/mockups/tokens.css`)
+**Core Philosophy (from Oil-UI):**
+- **One Protagonist, One Primary Action per Screen**:
+  - *Network (Dashboard)*: Protagonist is the live Obsidian Knowledge Graph & quick Emergency SOS trigger
+  - *Messages*: Protagonist is the Apple iMessage-style conversation list and clean thread
+  - *Emergency*: Protagonist is the Apple Satellite Emergency SOS trigger and category selector
+  - *Mesh Explorer*: Protagonist is the full-screen interactive Obsidian Knowledge Graph (pan, pinch-to-zoom, tap to inspect)
+  - *Settings*: Protagonist is the Apple Inset Grouped list (Keystore identity, radio parameters, security)
+- **Radical Subtraction**: Only essential information remains. Hairline dividers (0.5dp), subtle 10% white borders, and pure OLED black surfaces.
 
-| Token | Value | Use |
+---
+
+## 2. The Obsidian Knowledge Graph
+
+Inspired by the iconic **Obsidian Graph View**:
+- **Canvas Ambiance**: Pure deep space radial gradient (`#14171F` to `#000000`) with ambient cosmic micro-dust.
+- **Organic Physics Drift**: Floating nodes gently drifting with natural harmonic motion.
+- **Delicate Gravitational Filaments**: Thin translucent threads (1.2dp) connecting nodes.
+- **Interactive Gestures**: Pinch-to-zoom (0.6x to 2.8x) and drag-to-pan across the mesh. Tap to inspect nodes.
+- **Live SOS Neural Chain**: When an emergency SOS is active, the entire path `You → Aarav → Kabir → Priya` illuminates with a glowing crimson beam (`#FF453A`) and active traveling white energy packets.
+- **Floating Note Typography**: Clean SF Pro style labels floating beside each node with high-contrast pips.
+
+---
+
+## 3. Design Tokens (`docs/design/mockups/tokens.css`)
+
+Target Viewport: **390px × 844px** (Standard modern mobile viewport)
+
+| Token | Hex / Value | Semantic Role |
 |---|---|---|
-| bg | #060A07 | page (near-black, green-tinted, never #000) |
-| panel | #0A120C | panels, rows, nav |
-| panel-hi | #0E1A10 | raised panels, active inputs |
-| line / line-hi | #1C3320 / #2E5236 | hairline / lit borders |
-| ph | #7DF2A0 | primary text (phosphor green) |
-| ph-dim | #5FC47F | secondary text (~8.8:1) |
-| ph-faint | #4E9C69 | meta, timestamps (~5.7:1) |
-| amber | #E8C468 | warnings + HIGH priority only |
-| sos | #FF7A68 | SOS / critical only (~5.5:1) |
+| `--bg` | `#000000` | Pure Apple OLED Black |
+| `--surface` | `#1C1C1E` | Apple Secondary System Background |
+| `--surface-elevated` | `#2C2C2E` | Apple Tertiary System Background |
+| `--surface-muted` | `#3A3A3C` | Apple Quaternary Fill |
+| `--border` | `rgba(255, 255, 255, 0.10)` | Hairline subtle separator (0.5dp) |
+| `--border-subtle` | `rgba(255, 255, 255, 0.05)` | Faint divider line |
+| `--text-primary` | `#FFFFFF` | 100% white crisp primary text |
+| `--text-secondary` | `#8E8E93` | Apple System Gray secondary labels |
+| `--text-muted` | `#636366` | Apple System Gray 2 subtle metadata |
+| `--blue` | `#0A84FF` | Apple System Blue (active links, selection) |
+| `--green` | `#30D158` | Apple System Green (online, delivered) |
+| `--amber` | `#FF9F0A` | Apple System Orange (pending, warning) |
+| `--red` | `#FF453A` | Apple System Red (Emergency SOS) |
+| `--cyan` | `#32ADE6` | Apple System Cyan |
 
-Type — **two-tier system**:
-- **Silkscreen** (pixel, OFL) = identity tier: screen titles, section heads,
-  buttons, tags, readout numbers, route traces, and **names** (people are
-  headings, so they stay pixel)
-- **JetBrains Mono Nerd Font** (OFL) = reading tier: message bodies, note
-  input, previews, descriptions, IDs, timestamps, hop counts — a real code
-  font, so long-form reading stays comfortable while keeping terminal DNA
-- **VT323** (terminal, OFL) = CRT flavor only: boot log and ASCII topology
-  glyph art — the only two places a phosphor screen is being emulated
+---
 
-Fonts bundled in `docs/design/mockups/fonts/`.
+## 4. Typography Hierarchy (Apple SF Style)
 
-Shapes: ONE radius — 2px, near-sharp. Corner brackets `┌ ┐` motif on key
-panels.
+- **Large Title**: 32-34sp Bold (`AppleLargeTitle`)
+- **Title 2**: 22sp Bold (`AppleTitle2`)
+- **Headline**: 17sp SemiBold (`AppleHeadline`)
+- **Body**: 16-17sp Regular (`AppleBody`)
+- **Subhead**: 15sp Regular (`AppleSubhead`)
+- **Footnote**: 13sp Regular (`AppleFootnote`)
+- **Caption**: 11sp Medium (`AppleCaption`)
+- **Tech Code**: Crisp JetBrains Mono reserved *strictly* for cryptographic hashes, fingerprints, and GPS coordinates.
 
-## Signature elements
+---
 
-- **CRT scanlines** + subtle vignette (fixed overlay, pointer-events none)
-- **Boot log** on the dashboard — terminal is alive, blinking cursor `_`
-- **ASCII mesh topology** (`= | > -` links, YOU at centre, relay nodes lit)
-- **Route traces** everywhere: `YOU > AARAV > KABIR > PRIYA`
-- **ASCII-only glyphs** — VT323 has no box-drawing/symbols (verified);
-  all icons are ASCII text: `[*] [M] [!] [=] [$]`, status tags `DLV RLY SENT`
-- **Hop meter** `[####......] 3/6` for live SOS tracking
-- **Red SOS lever** — full-width, the only solid red element on any screen
+## 5. Clean Transitions & Apple Feel
 
-## Screens
-
-1. **DASH** — boot log, readouts (REACHABLE/RELAYING/QUEUED), ASCII topology,
-   activity feed with routes, SOS lever
-2. **MSGS** — thread list (unread badges, hop counts, status tags) + open
-   thread with per-message route traces
-3. **SOS** — categories, note, location toggle → post-send live hop tracker
-   with hop meter; received alerts history
-4. **MESH** — full ASCII topology with live SOS route, relay activity, device
-   list (id · hops · seen)
-5. **SYS** — identity (node fingerprint in dashed box), security, mesh
-   counters, permissions, scope note
-
-## Knit feature mapping (new screens worth adding)
-
-From the Knit repo exploration (GPL-3.0, /tmp/opencode/knit):
-- **Your mesh** screen — messages your phone relayed for others (fits SYS)
-- **Drafts** — composer keeps unsent text (fits MSGS)
-- **Delivery ticks ✓/✓✓ per message** (already have DLV/RLY/SENT)
-
-## Port plan (engine)
-
-Port from Knit (all pure Kotlin, tested): `MeshRouter` (dedup/TTL/jitter/
-overhear-suppression), `SeenSet`, CBOR `Wire` envelope (stripped to Lynq's
-CHAT/SOS/ACK/PRESENCE), `ForwardStore`/`ForwardSync` custody, `NodeId`.
-Skip: raw NAN/BLE transports (Lynq uses Nearby Connections), spools, LoRa.
-License note: porting GPL-3.0 code makes Lynq GPL-3.0.
-
-## Deliverables
-
-- Mockups: `docs/design/mockups/*.html` + `tokens.css` + `fonts/`
-- Screenshots: `shots/` (light set — dark IS the design; states:
-  `state-thread-open.png`, `state-sos-tracking.png`)
-
-## Delivery notes
-
-- ASCII mesh line-height 1.15 is deliberate: square character cell spacing.
-- Scanline overlay is a design feature, not a lint issue to remove.
-- Fonts verified: VT323 does NOT cover Unicode box-drawing or symbols —
-  the design is pure ASCII by necessity, which strengthened the aesthetic.
-- Visual self-review impossible this session (no image input); all
-  automated checks pass. Human eye pass recommended.
+- **Screen Transitions**: Apple fluid horizontal slide + fade (`FastOutSlowInEasing`, 280ms).
+- **Haptic Feedback & Spring Physics**: Interactive buttons scale subtly on press.
+- **Tab Bar**: Frosted glass bottom navigation bar (`#121214` with hairline border, 22dp vector glyphs, active blue tint).

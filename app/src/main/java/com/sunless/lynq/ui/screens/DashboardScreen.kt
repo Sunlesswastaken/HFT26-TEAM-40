@@ -1,151 +1,144 @@
 package com.sunless.lynq.ui.screens
 
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Hub
+import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.Sensors
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.sunless.lynq.demo.DemoData
-import com.sunless.lynq.ui.components.AsciiMesh
-import com.sunless.lynq.ui.components.BracketPanel
+import com.sunless.lynq.domain.model.DeliveryStatus
+import com.sunless.lynq.domain.model.Priority
+import com.sunless.lynq.ui.components.AppleDivider
+import com.sunless.lynq.ui.components.AppleGroupedCard
 import com.sunless.lynq.ui.components.CmdBar
-import com.sunless.lynq.ui.components.NodeAvatar
-import com.sunless.lynq.ui.components.Readout
-import com.sunless.lynq.ui.components.RouteTrace
-import com.sunless.lynq.ui.components.SecHead
+import com.sunless.lynq.ui.components.MeshGraph
+import com.sunless.lynq.ui.components.MetricCard
+import com.sunless.lynq.ui.components.ModernRouteTrace
+import com.sunless.lynq.ui.components.PriorityBadge
+import com.sunless.lynq.ui.components.SectionHeader
 import com.sunless.lynq.ui.components.SosLever
-import com.sunless.lynq.ui.components.StatusTag
-import com.sunless.lynq.ui.components.SysBar
-import com.sunless.lynq.ui.components.Tag
-import com.sunless.lynq.ui.components.TagTone
+import com.sunless.lynq.ui.components.StatusChip
+import com.sunless.lynq.ui.components.TopBar
+import com.sunless.lynq.ui.components.UserAvatar
 import com.sunless.lynq.ui.navigation.Screen
 import com.sunless.lynq.ui.navigation.navigateTab
+import com.sunless.lynq.ui.theme.AppleBody
+import com.sunless.lynq.ui.theme.AppleCaption
+import com.sunless.lynq.ui.theme.AppleFootnote
+import com.sunless.lynq.ui.theme.AppleHeadline
+import com.sunless.lynq.ui.theme.AppleSubhead
 import com.sunless.lynq.ui.theme.Lynq
-import com.sunless.lynq.ui.theme.TerminalStyle
 import com.sunless.lynq.util.asRelative
-
-/** Boot-line wrapper: [18:41:02] text + optional blinking cursor. */
-@Composable
-private fun BootLine(text: String, cursor: Boolean = false) {
-    val pal = Lynq.pal
-    val transition = rememberInfiniteTransition(label = "cursor")
-    val alpha by transition.animateFloat(
-        initialValue = 1f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(tween(1100)),
-        label = "blink",
-    )
-    Row {
-        Text(text = text, style = TerminalStyle, color = pal.phFaint)
-        if (cursor) {
-            Text(
-                text = "_",
-                style = TerminalStyle,
-                color = pal.ph.copy(alpha = alpha),
-            )
-        }
-    }
-}
 
 @Composable
 fun DashboardScreen(navController: NavHostController) {
     val pal = Lynq.pal
+
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 16.dp),
+                .padding(bottom = 24.dp),
         ) {
-            SysBar(reachableCount = DemoData.reachableCount)
+            TopBar(reachableCount = DemoData.reachableCount, title = "Network")
 
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                // boot log — the terminal is alive
-                Column(
-                    modifier = Modifier.padding(top = 14.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    BootLine("[18:41:02] mesh online · 4 nodes reachable")
-                    BootLine("[18:41:02] relay duty: AARAV, MEERA")
-                    BootLine("[18:41:07] queue: 3 msgs held for route", cursor = true)
-                }
-
+                // Headline Status
                 Text(
-                    text = "Network\nDashboard",
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.padding(top = 22.dp),
+                    text = "Decentralized mesh active · 0 cellular needed",
+                    style = AppleSubhead,
+                    color = pal.textSecondary,
+                    modifier = Modifier.padding(bottom = 16.dp),
                 )
 
-                // readouts
-                Row(
-                    modifier = Modifier.padding(top = 26.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    Readout("${DemoData.reachableCount}", "Reachable", Modifier.weight(1f))
-                    Readout("${DemoData.relayCount}", "Relaying", Modifier.weight(1f))
-                    Readout(
-                        "${DemoData.pendingMessages.size}", "Queued",
-                        Modifier.weight(1f), tint = pal.warn,
-                    )
-                }
+                // Protagonist: Live Obsidian Mesh Graph
+                MeshGraph(
+                    peers = DemoData.peers,
+                    liveRoute = listOf("You", "Aarav", "Kabir", "Priya"),
+                    height = 230.dp,
+                    interactive = true,
+                )
 
-                // topology
-                Spacer(Modifier.height(26.dp))
-                SecHead("Topology", trailing = {
-                    Text("full >", style = TerminalStyle, color = pal.phDim)
-                })
-                BracketPanel(modifier = Modifier.padding(top = 10.dp)) {
-                    AsciiMesh(
-                        peers = DemoData.peers,
-                        liveRoute = listOf("You", "Aarav", "Kabir", "Priya"),
-                    )
-                    Text(
-                        text = "2 links direct · 2 via relay",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = pal.phFaint,
-                        modifier = Modifier.padding(top = 10.dp),
-                    )
-                }
+                Spacer(Modifier.height(16.dp))
 
-                // activity
-                Spacer(Modifier.height(26.dp))
-                SecHead("Activity", trailing = {
-                    Text("all msgs >", style = TerminalStyle, color = pal.phDim)
-                })
-                androidx.compose.foundation.layout.Box {
-                    Column {
-                        DemoData.activity.forEachIndexed { i, msg ->
-                            if (i > 0) {
-                                Spacer(Modifier.height(8.dp))
-                            }
-                            ActivityRow(msg.senderName, msg.body, msg.routeHistory, msg.status, msg.priority, msg.createdAt)
-                        }
-                    }
-                }
-
-                // quick SOS
+                // Apple Emergency SOS Trigger
                 SosLever(
                     onClick = { navController.navigateTab(Screen.Emergency.route) },
-                    modifier = Modifier.padding(top = 26.dp),
                 )
+
+                Spacer(Modifier.height(16.dp))
+
+                // Clean Apple Metric Row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    MetricCard(
+                        value = "${DemoData.reachableCount}",
+                        label = "Reachable",
+                        accentColor = pal.accentBlue,
+                        icon = Icons.Rounded.Sensors,
+                        modifier = Modifier.weight(1f),
+                    )
+                    MetricCard(
+                        value = "${DemoData.relayCount}",
+                        label = "Relaying",
+                        accentColor = pal.accentGreen,
+                        icon = Icons.Rounded.Hub,
+                        modifier = Modifier.weight(1f),
+                    )
+                    MetricCard(
+                        value = "${DemoData.pendingMessages.size}",
+                        label = "Queued",
+                        accentColor = pal.warningAmber,
+                        icon = Icons.Rounded.Schedule,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+
+                Spacer(Modifier.height(24.dp))
+
+                // Apple Inset Grouped Section for Activity
+                SectionHeader(
+                    title = "Recent Transmissions",
+                    actionText = "See All",
+                    onActionClick = { navController.navigateTab(Screen.Messages.route) },
+                )
+
+                Spacer(Modifier.height(10.dp))
+
+                AppleGroupedCard {
+                    DemoData.activity.take(4).forEachIndexed { index, msg ->
+                        if (index > 0) AppleDivider()
+                        ActivityRow(
+                            who = msg.senderName,
+                            body = msg.body,
+                            route = msg.routeHistory,
+                            status = msg.status,
+                            priority = msg.priority,
+                            at = msg.createdAt,
+                            onClick = { navController.navigateTab(Screen.Messages.route) },
+                        )
+                    }
+                }
             }
         }
 
@@ -161,53 +154,65 @@ private fun ActivityRow(
     who: String,
     body: String,
     route: List<String>,
-    status: com.sunless.lynq.domain.model.DeliveryStatus,
-    priority: com.sunless.lynq.domain.model.Priority,
+    status: DeliveryStatus,
+    priority: Priority,
     at: Long,
+    onClick: () -> Unit,
 ) {
     val pal = Lynq.pal
-    androidx.compose.material3.Surface(
-        shape = MaterialTheme.shapes.small,
-        color = pal.panel,
-        border = androidx.compose.foundation.BorderStroke(1.dp, pal.line),
+    val isCritical = priority == Priority.CRITICAL
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            NodeAvatar(name = who, crit = priority == com.sunless.lynq.domain.model.Priority.CRITICAL)
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text(who.uppercase(), style = MaterialTheme.typography.titleMedium)
-                    if (priority != com.sunless.lynq.domain.model.Priority.NORMAL) {
-                        Tag(
-                            text = if (priority == com.sunless.lynq.domain.model.Priority.CRITICAL) "SOS" else "HIGH",
-                            tone = if (priority == com.sunless.lynq.domain.model.Priority.CRITICAL) TagTone.CRIT else TagTone.WARN,
-                            modifier = Modifier.padding(start = 8.dp),
-                        )
-                    }
-                    Spacer(Modifier.weight(1f))
-                    Text(
-                        text = at.asRelative(),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = pal.phFaint,
-                    )
-                }
+        UserAvatar(
+            name = who,
+            size = 40.dp,
+            isCritical = isCritical,
+        )
+
+        Column(modifier = Modifier.weight(1f)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Text(
-                    text = body,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = pal.phDim,
+                    text = who,
+                    style = AppleHeadline,
+                    color = pal.textPrimary,
+                    fontWeight = FontWeight.SemiBold,
                 )
-                Row(
-                    modifier = Modifier.padding(top = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    RouteTrace(route = route)
-                    StatusTag(status = status)
-                }
+                Text(
+                    text = at.asRelative(),
+                    style = AppleCaption,
+                    color = pal.textMuted,
+                )
+            }
+
+            Spacer(Modifier.height(2.dp))
+
+            Text(
+                text = body,
+                style = AppleFootnote,
+                color = if (isCritical) pal.emergencyRed else pal.textSecondary,
+                maxLines = 1,
+            )
+
+            Spacer(Modifier.height(4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ModernRouteTrace(route = route)
+                StatusChip(status = status)
             }
         }
     }

@@ -31,3 +31,4 @@ pip-log.txt
 *.jks
 *.keystore
 keystore.properties
+shots/

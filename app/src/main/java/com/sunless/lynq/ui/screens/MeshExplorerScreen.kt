@@ -1,168 +1,160 @@
 package com.sunless.lynq.ui.screens
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Hub
+import androidx.compose.material.icons.rounded.NearMe
+import androidx.compose.material.icons.rounded.Sensors
+import androidx.compose.material.icons.rounded.WifiTethering
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.sunless.lynq.demo.DemoData
-import com.sunless.lynq.domain.model.Priority
-import com.sunless.lynq.ui.components.AsciiMesh
-import com.sunless.lynq.ui.components.BracketPanel
+import com.sunless.lynq.domain.model.Peer
+import com.sunless.lynq.ui.components.AppleDivider
+import com.sunless.lynq.ui.components.AppleGroupedCard
 import com.sunless.lynq.ui.components.CmdBar
-import com.sunless.lynq.ui.components.NodeAvatar
-import com.sunless.lynq.ui.components.RouteTrace
-import com.sunless.lynq.ui.components.SecHead
-import com.sunless.lynq.ui.components.StatusTag
-import com.sunless.lynq.ui.components.SysBar
-import com.sunless.lynq.ui.components.Tag
-import com.sunless.lynq.ui.components.TagTone
+import com.sunless.lynq.ui.components.MeshGraph
+import com.sunless.lynq.ui.components.MetricCard
+import com.sunless.lynq.ui.components.ModernRouteTrace
+import com.sunless.lynq.ui.components.SectionHeader
+import com.sunless.lynq.ui.components.StatusChip
+import com.sunless.lynq.ui.components.TopBar
+import com.sunless.lynq.ui.components.UserAvatar
 import com.sunless.lynq.ui.navigation.Screen
 import com.sunless.lynq.ui.navigation.navigateTab
+import com.sunless.lynq.ui.theme.AppleBody
+import com.sunless.lynq.ui.theme.AppleCaption
+import com.sunless.lynq.ui.theme.AppleFootnote
+import com.sunless.lynq.ui.theme.AppleHeadline
+import com.sunless.lynq.ui.theme.AppleSubhead
 import com.sunless.lynq.ui.theme.Lynq
-import com.sunless.lynq.ui.theme.TerminalStyle
+import com.sunless.lynq.ui.theme.TechCodeStyle
 import com.sunless.lynq.util.asRelative
 
 @Composable
 fun MeshExplorerScreen(navController: NavHostController) {
     val pal = Lynq.pal
+    val liveRoute = listOf("You", "Aarav", "Kabir", "Priya")
+    var selectedPeerName by remember { mutableStateOf<String?>(null) }
+
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 16.dp),
+                .padding(bottom = 24.dp),
         ) {
-            SysBar(reachableCount = DemoData.reachableCount)
+            TopBar(reachableCount = DemoData.reachableCount, title = "Mesh Graph")
 
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 Text(
-                    text = "Mesh Explorer",
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.padding(top = 18.dp),
-                )
-                Text(
-                    text = "topology from this device's view",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = pal.phFaint,
-                    modifier = Modifier.padding(top = 6.dp),
+                    text = "Interactive Obsidian cluster topology · pinch & drag to explore",
+                    style = AppleSubhead,
+                    color = pal.textSecondary,
+                    modifier = Modifier.padding(bottom = 16.dp),
                 )
 
-                val liveRoute = listOf("You", "Aarav", "Kabir", "Priya")
+                // Protagonist: Expansive Interactive Obsidian Knowledge Graph
+                MeshGraph(
+                    peers = DemoData.peers,
+                    liveRoute = liveRoute,
+                    height = 320.dp,
+                    interactive = true,
+                    onNodeSelected = { selectedPeerName = it },
+                )
 
-                // topology
-                Spacer(Modifier.height(24.dp))
-                SecHead("Topology", trailing = { Tag("SOS ROUTE LIVE", tone = TagTone.CRIT) })
-                BracketPanel(modifier = Modifier.padding(top = 10.dp)) {
-                    AsciiMesh(peers = DemoData.peers, liveRoute = liveRoute)
-                    Text(
-                        text = "== live SOS · -- relay link",
-                        style = TerminalStyle,
-                        color = pal.phFaint,
-                        modifier = Modifier.padding(top = 10.dp),
+                Spacer(Modifier.height(16.dp))
+
+                // Stats row
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    MetricCard(
+                        value = "${DemoData.peers.count { it.hops == 1 }}",
+                        label = "Direct Links",
+                        accentColor = pal.accentBlue,
+                        icon = Icons.Rounded.WifiTethering,
+                        modifier = Modifier.weight(1f),
                     )
-                    Row(
-                        modifier = Modifier.padding(top = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        RouteTrace(route = liveRoute)
-                        StatusTag(status = com.sunless.lynq.domain.model.DeliveryStatus.DELIVERED)
+                    MetricCard(
+                        value = "${DemoData.peers.count { it.hops > 1 }}",
+                        label = "Multi-Hop",
+                        accentColor = pal.accentGreen,
+                        icon = Icons.Rounded.Hub,
+                        modifier = Modifier.weight(1f),
+                    )
+                    MetricCard(
+                        value = "6",
+                        label = "Hop Limit",
+                        accentColor = pal.textSecondary,
+                        icon = Icons.Rounded.NearMe,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+
+                Spacer(Modifier.height(24.dp))
+
+                // Discovered Nodes
+                SectionHeader(
+                    title = "Discovered Nodes",
+                    actionText = "${DemoData.peers.size} Reachable",
+                )
+                Spacer(Modifier.height(10.dp))
+
+                AppleGroupedCard {
+                    DemoData.peers.forEachIndexed { index, peer ->
+                        if (index > 0) AppleDivider()
+                        PeerRow(peer = peer)
                     }
                 }
 
-                // relay activity
-                Spacer(Modifier.height(26.dp))
-                SecHead("Relay activity")
-                DemoData.activity.forEachIndexed { i, msg ->
-                    if (i > 0) Spacer(Modifier.height(8.dp))
-                    Surface(
-                        shape = MaterialTheme.shapes.small,
-                        color = pal.panel,
-                        border = BorderStroke(1.dp, pal.line),
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Tag(
-                                        text = when (msg.priority) {
-                                            Priority.CRITICAL -> "SOS"
-                                            Priority.HIGH -> "HIGH"
-                                            Priority.NORMAL -> "MSG"
-                                        },
-                                        tone = when (msg.priority) {
-                                            Priority.CRITICAL -> TagTone.CRIT
-                                            Priority.HIGH -> TagTone.WARN
-                                            Priority.NORMAL -> TagTone.NEUTRAL
-                                        },
-                                    )
-                                    Text(
-                                        text = msg.body,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = pal.phDim,
-                                    )
-                                }
-                                RouteTrace(route = msg.routeHistory, modifier = Modifier.padding(top = 3.dp))
-                            }
-                            StatusTag(status = msg.status)
-                        }
-                    }
-                }
+                Spacer(Modifier.height(24.dp))
 
-                // devices
-                Spacer(Modifier.height(26.dp))
-                SecHead("Devices", trailing = {
-                    Text("${DemoData.peers.size} linked", style = TerminalStyle, color = pal.phFaint)
-                })
-                DemoData.peers.forEachIndexed { i, peer ->
-                    if (i > 0) Spacer(Modifier.height(8.dp))
-                    Surface(
-                        shape = MaterialTheme.shapes.small,
-                        color = pal.panel,
-                        border = BorderStroke(1.dp, pal.line),
-                    ) {
+                // Live Relay Packet Log
+                SectionHeader(title = "Relay Packet Log")
+                Spacer(Modifier.height(10.dp))
+
+                AppleGroupedCard {
+                    DemoData.activity.take(3).forEachIndexed { index, msg ->
+                        if (index > 0) AppleDivider()
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            NodeAvatar(name = peer.name, relay = peer.relaying)
-                            Column(Modifier.weight(1f)) {
-                                Text(peer.name.uppercase(), style = MaterialTheme.typography.titleMedium)
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "${peer.id.take(8)} · ${peer.hops} ${if (peer.hops == 1) "hop" else "hops"} · seen ${peer.lastSeen.asRelative()}",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = pal.phFaint,
-                                    modifier = Modifier.padding(top = 2.dp),
+                                    text = msg.senderName,
+                                    style = AppleHeadline,
+                                    color = pal.textPrimary,
                                 )
+                                Spacer(Modifier.height(2.dp))
+                                ModernRouteTrace(route = msg.routeHistory)
                             }
-                            Tag(
-                                text = if (peer.relaying) "RELAY" else "LINK",
-                                tone = if (peer.relaying) TagTone.OK else TagTone.NEUTRAL,
-                            )
+                            StatusChip(status = msg.status)
                         }
                     }
                 }
@@ -173,5 +165,64 @@ fun MeshExplorerScreen(navController: NavHostController) {
             currentRoute = Screen.MeshExplorer.route,
             onSelect = { navController.navigateTab(it) },
         )
+    }
+}
+
+@Composable
+private fun PeerRow(peer: Peer) {
+    val pal = Lynq.pal
+    val isDirect = peer.hops == 1
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        UserAvatar(
+            name = peer.name,
+            size = 44.dp,
+            isRelay = peer.relaying,
+        )
+
+        Column(modifier = Modifier.weight(1f)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = peer.name,
+                    style = AppleHeadline,
+                    fontWeight = FontWeight.SemiBold,
+                    color = pal.textPrimary,
+                )
+                Text(
+                    text = if (isDirect) "Direct link" else "${peer.hops} hops",
+                    style = AppleCaption,
+                    color = if (isDirect) pal.accentBlue else pal.textMuted,
+                )
+            }
+
+            Spacer(Modifier.height(2.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "${peer.id.take(8)} · ${if (isDirect) "Direct Connection" else "Relayed via Aarav"}",
+                    style = AppleFootnote,
+                    color = pal.textSecondary,
+                )
+                Text(
+                    text = peer.lastSeen.asRelative(),
+                    style = AppleCaption,
+                    color = pal.textMuted,
+                )
+            }
+        }
     }
 }
