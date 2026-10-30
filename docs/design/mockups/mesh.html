@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lynq — Mesh Explorer</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  .graph-card { padding: 0; overflow: hidden; }
+  .graph-stage { height: 340px; position: relative; }
+  .graph-stage svg { display: block; width: 100%; height: 100%; }
+  .you-node {
+    position: absolute;
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: var(--ink); color: var(--surface);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 500; letter-spacing: 1px;
+    transform: translate(-50%, -50%);
+  }
+  .peer-node {
+    position: absolute;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--sunken); color: var(--ink);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 500;
+    transform: translate(-50%, -50%);
+  }
+  .peer-node.relaying { background: var(--ink); color: var(--surface); }
+  .node-label {
+    position: absolute; text-align: center; width: 76px;
+    transform: translateX(-50%);
+    font-size: 13px; line-height: 17px; font-weight: 500;
+  }
+  .node-label .hops { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--muted); font-weight: 400; letter-spacing: 0.4px; }
+
+  .flow-tag {
+    position: absolute; transform: translate(-50%, -50%);
+    background: var(--sos-soft); color: var(--sos);
+    font-size: 10px; font-weight: 500; letter-spacing: 0.8px;
+    border-radius: 999px; padding: 3px 8px;
+    text-transform: uppercase; white-space: nowrap;
+  }
+
+  .peer-row .body-line { flex: 1; min-width: 0; }
+  .peer-row .top { display: flex; align-items: baseline; gap: 8px; }
+  .peer-row .hops-line { margin-top: 2px; }
+  .peer-row .right { text-align: right; margin-left: auto; }
+  .peer-row .state { font-size: 11px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; }
+  .peer-row .state.relay { color: var(--signal); }
+  .peer-row .seen { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .legend { display: flex; gap: 16px; margin-top: 12px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .legend .swatch { width: 12px; height: 12px; border-radius: 50%; }
+</style>
+</head>
+<body>
+  <header class="apphead">
+    <div class="wordmark">Lynq</div>
+    <div class="live-pill"><span class="dot on"></span>4 reachable</div>
+  </header>
+
+  <main class="page">
+    <div class="section" style="margin-top: 22px">
+      <h1 class="headline">Mesh Explorer</h1>
+      <p class="body-s" style="margin-top: 6px">Live topology from this device's view.</p>
+    </div>
+
+    <div class="section">
+      <div class="card graph-card">
+        <div class="graph-stage">
+          <svg viewBox="0 0 350 340" aria-label="Mesh topology graph with a highlighted SOS route">
+            <circle cx="175" cy="170" r="112" fill="none" stroke="var(--hairline)" stroke-width="1"/>
+            <!-- base links -->
+            <line x1="175" y1="170" x2="175" y2="58"  stroke="var(--hairline)"/>
+            <line x1="175" y1="170" x2="175" y2="282" stroke="var(--hairline)"/>
+            <line x1="175" y1="170" x2="287" y2="170" stroke="var(--hairline)"/>
+            <line x1="175" y1="170" x2="63"  y2="170" stroke="var(--hairline)"/>
+            <!-- highlighted SOS route: You -> Aarav (top) -> Kabir (right) -> Priya (bottom), chords stay off-centre -->
+            <line x1="175" y1="170" x2="175" y2="58" stroke="var(--sos)" stroke-width="2"/>
+            <line x1="175" y1="58" x2="287" y2="170" stroke="var(--sos)" stroke-width="2"/>
+            <line x1="287" y1="170" x2="175" y2="282" stroke="var(--sos)" stroke-width="2"/>
+          </svg>
+          <div class="you-node" style="left:50%; top:50%">YOU</div>
+
+          <div class="peer-node relaying" style="left:50%; top:17%">A</div>
+          <div class="node-label" style="left:50%; top:calc(17% + 32px)">Aarav<div class="hops">1 hop</div></div>
+
+          <div class="peer-node relaying" style="left:82%; top:50%">K</div>
+          <div class="node-label" style="left:82%; top:calc(50% - 52px)">Kabir<div class="hops">2 hops</div></div>
+
+          <div class="peer-node" style="left:50%; top:83%">P</div>
+          <div class="node-label" style="left:50%; top:calc(83% - 52px)">Priya<div class="hops">3 hops</div></div>
+
+          <div class="peer-node" style="left:18%; top:50%">M</div>
+          <div class="node-label" style="left:18%; top:calc(50% - 52px)">Meera<div class="hops">1 hop</div></div>
+
+          <div class="flow-tag" style="left:60%; top:28%">SOS passing</div>
+          <div class="flow-tag" style="left:60%; top:72%">SOS passing</div>
+        </div>
+        <div style="padding: 14px 20px; border-top: 1px solid var(--hairline)">
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
+            <span class="priority-mark priority-critical">Critical</span>
+            <span class="route">You → Aarav → Kabir → Priya</span>
+            <span class="pill pill-delivered" style="margin-left:auto">Delivered</span>
+          </div>
+          <div class="legend">
+            <span><span class="swatch" style="background:var(--ink)"></span>Relaying</span>
+            <span><span class="swatch" style="background:var(--sunken); border:1px solid var(--hairline)"></span>Reachable</span>
+            <span><span class="swatch" style="background:var(--sos-soft); border:1px solid var(--sos)"></span>Live route</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Relay activity -->
+    <div class="section">
+      <div class="section-head"><span class="eyebrow">Relay activity</span></div>
+      <div class="rows">
+        <div class="row" style="align-items:center; gap:12px">
+          <div style="flex:1; min-width:0">
+            <div class="body-m">SOS · Fire on the third floor</div>
+            <div class="route" style="margin-top:3px">You → Aarav → Kabir → Priya</div>
+          </div>
+          <span class="pill pill-delivered">Delivered</span>
+        </div>
+        <div class="row" style="align-items:center; gap:12px">
+          <div style="flex:1; min-width:0">
+            <div class="body-m">High · Water at the north gate</div>
+            <div class="route" style="margin-top:3px">Meera → Kabir → You</div>
+          </div>
+          <span class="pill pill-relayed">Relaying</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Device list -->
+    <div class="section">
+      <div class="section-head"><span class="eyebrow">Devices</span></div>
+      <div class="rows">
+        <div class="row peer-row">
+          <div class="avatar relaying">A</div>
+          <div class="body-line">
+            <div class="top"><span class="title-m">Aarav</span></div>
+            <div class="hops-line route">2b7f9c41 · 1 hop · seen 4s</div>
+          </div>
+          <div class="right">
+            <div class="state relay">Relaying</div>
+          </div>
+        </div>
+        <div class="row peer-row">
+          <div class="avatar relaying">M</div>
+          <div class="body-line">
+            <div class="top"><span class="title-m">Meera</span></div>
+            <div class="hops-line route">5d80e2aa · 1 hop · seen 11s</div>
+          </div>
+          <div class="right">
+            <div class="state relay">Relaying</div>
+          </div>
+        </div>
+        <div class="row peer-row">
+          <div class="avatar">K</div>
+          <div class="body-line">
+            <div class="top"><span class="title-m">Kabir</span></div>
+            <div class="hops-line route">c14b76f3 · 2 hops · seen 38s</div>
+          </div>
+          <div class="right">
+            <div class="state" style="color:var(--muted)">Linked</div>
+          </div>
+        </div>
+        <div class="row peer-row">
+          <div class="avatar">P</div>
+          <div class="body-line">
+            <div class="top"><span class="title-m">Priya</span></div>
+            <div class="hops-line route">8ae0d915 · 3 hops · seen 1m</div>
+          </div>
+          <div class="right">
+            <div class="state" style="color:var(--muted)">Linked</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <nav class="bottomnav">
+    <a class="item" href="dashboard.html">
+      <svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
+      Mesh
+    </a>
+    <a class="item" href="messages.html">
+      <svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z"/></svg>
+      Messages
+    </a>
+    <a class="item sos" href="emergency.html">
+      <svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="0.6"/></svg>
+      SOS
+    </a>
+    <a class="item active" href="mesh.html">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M7 7l3 3M17 7l-3 3M7 17l3-3M17 17l-3-3"/></svg>
+      Explore
+    </a>
+    <a class="item" href="settings.html">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.06-.4.1-.8.1-1.2z"/></svg>
+      Settings
+    </a>
+  </nav>
+
+  <script>
+    const p = new URLSearchParams(location.search);
+    if (p.get("theme") === "dark") document.documentElement.dataset.theme = "dark";
+  </script>
+</body>
+</html>

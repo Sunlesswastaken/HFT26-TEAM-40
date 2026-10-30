@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lynq — Settings &amp; Identity</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  .identity-card { display: flex; gap: 14px; align-items: center; }
+  .me-avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--ink); color: var(--surface);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 500;
+    flex: none;
+  }
+  .fp { word-break: break-all; }
+
+  .setting-row .body-line { flex: 1; min-width: 0; }
+  .setting-row .sub { font-size: 13px; line-height: 17px; color: var(--muted); margin-top: 1px; }
+  .setting-row + .setting-row { border-top: 1px solid var(--hairline); }
+
+  .kv { display: flex; justify-content: space-between; gap: 16px; padding: 11px 0; }
+  .kv + .kv { border-top: 1px solid var(--hairline); }
+  .kv .k { font-size: 14px; color: var(--muted); flex: none; }
+  .kv .v { font-size: 14px; text-align: right; }
+</style>
+</head>
+<body>
+  <header class="apphead">
+    <div class="wordmark">Lynq</div>
+    <div class="live-pill"><span class="dot on"></span>4 reachable</div>
+  </header>
+
+  <main class="page">
+    <div class="section" style="margin-top: 22px">
+      <h1 class="headline">Settings</h1>
+    </div>
+
+    <!-- Identity -->
+    <div class="section">
+      <div class="section-head"><span class="eyebrow">Identity</span></div>
+      <div class="card identity-card">
+        <div class="me-avatar">S</div>
+        <div style="flex:1; min-width:0">
+          <div class="title-l">Sunless</div>
+          <div class="route fp" style="margin-top:3px">9f3c41d8 a7e5 4b02</div>
+          <div class="body-s" style="margin-top:2px">Pixel 8</div>
+        </div>
+      </div>
+      <p class="body-s" style="margin-top: 12px">
+        Your ID is the fingerprint of this device's key. Peers verify every
+        message you sign with it.
+      </p>
+    </div>
+
+    <!-- Security -->
+    <div class="section">
+      <div class="section-head"><span class="eyebrow">Security</span></div>
+      <div class="rows">
+        <div class="row setting-row">
+          <div class="body-line">
+            <div class="title-m">End-to-end encryption</div>
+            <div class="sub">AES-256-GCM · keys never leave this device</div>
+          </div>
+          <span class="pill pill-delivered">On</span>
+        </div>
+        <div class="row setting-row">
+          <div class="body-line">
+            <div class="title-m">Signed identity</div>
+            <div class="sub">Every outgoing message is signed</div>
+          </div>
+          <span class="pill pill-delivered">On</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Battery & network -->
+    <div class="section">
+      <div class="section-head"><span class="eyebrow">Battery &amp; network</span></div>
+      <div class="card" style="padding: 6px 20px">
+        <div class="kv">
+          <span class="k">Relay for others</span>
+          <span class="v">Always</span>
+        </div>
+        <div class="kv">
+          <span class="k">Discovery</span>
+          <span class="v">Continuous</span>
+        </div>
+        <div class="kv">
+          <span class="k">Message retention</span>
+          <span class="v">6 hours</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Permissions -->
+    <div class="section">
+      <div class="section-head"><span class="eyebrow">Permissions</span></div>
+      <div class="rows">
+        <div class="row setting-row">
+          <div class="body-line">
+            <div class="title-m">Nearby devices</div>
+            <div class="sub">Find and talk to Lynq devices around you</div>
+          </div>
+          <span class="pill pill-delivered">Granted</span>
+        </div>
+        <div class="row setting-row">
+          <div class="body-line">
+            <div class="title-m">Location</div>
+            <div class="sub">Only used when you attach it to an SOS</div>
+          </div>
+          <span class="pill pill-sent">Not set</span>
+        </div>
+        <div class="row setting-row">
+          <div class="body-line">
+            <div class="title-m">Notifications</div>
+            <div class="sub">Alerts you when an SOS arrives</div>
+          </div>
+          <span class="pill pill-delivered">Granted</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <p class="body-s">
+        Lynq relays messages between nearby devices only. It cannot reach
+        emergency services without a cellular or internet path.
+      </p>
+    </div>
+  </main>
+
+  <nav class="bottomnav">
+    <a class="item" href="dashboard.html">
+      <svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
+      Mesh
+    </a>
+    <a class="item" href="messages.html">
+      <svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z"/></svg>
+      Messages
+    </a>
+    <a class="item sos" href="emergency.html">
+      <svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="0.6"/></svg>
+      SOS
+    </a>
+    <a class="item" href="mesh.html">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M7 7l3 3M17 7l-3 3M7 17l3-3M17 17l-3-3"/></svg>
+      Explore
+    </a>
+    <a class="item active" href="settings.html">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.06-.4.1-.8.1-1.2z"/></svg>
+      Settings
+    </a>
+  </nav>
+
+  <script>
+    const p = new URLSearchParams(location.search);
+    if (p.get("theme") === "dark") document.documentElement.dataset.theme = "dark";
+  </script>
+</body>
+</html>

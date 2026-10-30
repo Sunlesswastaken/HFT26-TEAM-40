@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lynq — Network Dashboard</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  .mesh-card { padding: 0; overflow: hidden; }
+  .mesh-stage {
+    height: 280px;
+    position: relative;
+    border-bottom: 1px solid var(--hairline);
+  }
+  .mesh-stage svg { display: block; width: 100%; height: 100%; }
+  .node-label {
+    position: absolute;
+    text-align: center;
+    width: 72px;
+    transform: translateX(-50%);
+    font-size: 13px;
+    line-height: 17px;
+    font-weight: 500;
+  }
+  .node-label .hops { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--muted); font-weight: 400; letter-spacing: 0.4px; }
+  .you-node {
+    position: absolute;
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--surface);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 500; letter-spacing: 1px;
+    transform: translate(-50%, -50%);
+  }
+  .peer-node {
+    position: absolute;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--sunken);
+    color: var(--ink);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 500;
+    transform: translate(-50%, -50%);
+  }
+  .peer-node.relaying { background: var(--ink); color: var(--surface); }
+  .mesh-foot { padding: 14px 20px; }
+
+  .activity-row { align-items: center; }
+  .activity-row .body-line { flex: 1; min-width: 0; }
+  .activity-row .preview {
+    font-size: 14px; line-height: 20px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .activity-row .meta {
+    display: flex; align-items: center; gap: 8px; margin-top: 3px;
+  }
+  .activity-row .time { font-size: 12px; color: var(--muted); }
+
+  .sos-quick { margin-top: 32px; }
+</style>
+</head>
+<body>
+  <header class="apphead">
+    <div class="wordmark">Lynq</div>
+    <div class="live-pill"><span class="dot on"></span>4 reachable</div>
+  </header>
+
+  <main class="page">
+    <div class="section" style="margin-top: 22px">
+      <h1 class="headline">Network<br>Dashboard</h1>
+    </div>
+
+    <!-- Hero stats -->
+    <div class="section gutter-row" role="group" aria-label="Mesh stats">
+      <div class="stat" style="flex:1">
+        <div class="num">4</div>
+        <div class="cap">Reachable</div>
+      </div>
+      <div class="stat" style="flex:1">
+        <div class="num">2</div>
+        <div class="cap">Relaying</div>
+      </div>
+      <div class="stat" style="flex:1">
+        <div class="num">3</div>
+        <div class="cap">Queued</div>
+      </div>
+    </div>
+
+    <!-- Mesh preview -->
+    <div class="section">
+      <div class="card mesh-card">
+        <div class="mesh-stage">
+          <svg viewBox="0 0 350 280" aria-label="Mesh topology: you at centre, four peers around">
+            <circle cx="175" cy="140" r="88" fill="none" stroke="var(--hairline)" stroke-width="1"/>
+            <line x1="175" y1="140" x2="175" y2="52"  stroke="var(--hairline)"/>
+            <line x1="175" y1="140" x2="263" y2="140" stroke="var(--hairline)"/>
+            <line x1="175" y1="140" x2="175" y2="228" stroke="var(--hairline)"/>
+            <line x1="175" y1="140" x2="87"  y2="140" stroke="var(--hairline)"/>
+          </svg>
+          <div class="you-node" style="left:50%; top:50%">YOU</div>
+          <div class="peer-node relaying" style="left:50%; top:18.5%">A</div>
+          <div class="node-label" style="left:50%; top:calc(18.5% + 34px)">Aarav<div class="hops">1 hop</div></div>
+          <div class="peer-node relaying" style="left:75%; top:50%">M</div>
+          <div class="node-label" style="left:75%; top:calc(50% + 34px)">Meera<div class="hops">1 hop</div></div>
+          <div class="peer-node" style="left:50%; top:81.5%">K</div>
+          <div class="node-label" style="left:50%; top:calc(81.5% - 56px)">Kabir<div class="hops">2 hops</div></div>
+          <div class="peer-node" style="left:25%; top:50%">P</div>
+          <div class="node-label" style="left:25%; top:calc(50% - 56px)">Priya<div class="hops">3 hops</div></div>
+        </div>
+        <div class="mesh-foot linkrow">
+          <span>Aarav and Meera are carrying traffic</span>
+          <span aria-hidden="true">→</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity -->
+    <div class="section">
+      <div class="section-head">
+        <span class="eyebrow">Activity</span>
+        <a class="linkrow" style="font-size:13px; text-decoration:none" href="messages.html">All messages <span aria-hidden="true">→</span></a>
+      </div>
+      <div class="rows">
+        <div class="row activity-row">
+          <div class="avatar">A</div>
+          <div class="body-line">
+            <div class="title-m">Aarav</div>
+            <div class="preview">Reached the shelter, two more with me.</div>
+            <div class="meta">
+              <span class="route">Aarav → You</span>
+              <span class="pill pill-delivered">Delivered</span>
+            </div>
+          </div>
+          <div class="time">2m</div>
+        </div>
+        <div class="row activity-row">
+          <div class="avatar">M</div>
+          <div class="body-line">
+            <div class="title-m" style="display:flex; gap:8px; align-items:center">Meera <span class="priority-mark priority-high">High</span></div>
+            <div class="preview">Water at the north gate. Bring the kit.</div>
+            <div class="meta">
+              <span class="route">Meera → Kabir → You</span>
+              <span class="pill pill-relayed">Relaying</span>
+            </div>
+          </div>
+          <div class="time">26m</div>
+        </div>
+        <div class="row activity-row">
+          <div class="avatar sos-sender">Y</div>
+          <div class="body-line">
+            <div class="title-m" style="display:flex; gap:8px; align-items:center">You <span class="priority-mark priority-critical">Critical</span></div>
+            <div class="preview">Fire on the third floor, evacuating east.</div>
+            <div class="meta">
+              <span class="route">You → Aarav → Kabir → Priya</span>
+              <span class="pill pill-delivered">Delivered</span>
+            </div>
+          </div>
+          <div class="time">41m</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick SOS -->
+    <div class="sos-quick">
+      <button class="sos-btn" aria-label="Send SOS broadcast">
+        <span>
+          <span class="title-l" style="display:block">Send SOS</span>
+          <span class="sub">Broadcasts to every device in range</span>
+        </span>
+        <span class="tag">Critical</span>
+      </button>
+    </div>
+  </main>
+
+  <nav class="bottomnav">
+    <a class="item active" href="dashboard.html">
+      <svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
+      Mesh
+    </a>
+    <a class="item" href="messages.html">
+      <svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z"/></svg>
+      Messages
+    </a>
+    <a class="item sos" href="emergency.html">
+      <svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="0.6"/></svg>
+      SOS
+    </a>
+    <a class="item" href="mesh.html">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M7 7l3 3M17 7l-3 3M7 17l3-3M17 17l-3-3"/></svg>
+      Explore
+    </a>
+    <a class="item" href="settings.html">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.06-.4.1-.8.1-1.2z"/></svg>
+      Settings
+    </a>
+  </nav>
+
+  <script>
+    const p = new URLSearchParams(location.search);
+    if (p.get("theme") === "dark") document.documentElement.dataset.theme = "dark";
+  </script>
+</body>
+</html>

@@ -1,0 +1,284 @@
+/* Lynq design tokens — 1:1 with app/src/main/java/com/sunless/lynq/ui/theme/ */
+
+:root {
+  --bg: #F7F7F4;
+  --surface: #FFFFFF;
+  --sunken: #EFEFE9;
+  --ink: #141614;
+  --muted: #6B7069;
+  --hairline: #E2E2DA;
+  --signal: #14634F;
+  --signal-soft: #14634F1F;
+  --sos: #B42318;
+  --on-sos: #FFFFFF;
+  --sos-soft: #FCEDEB;
+  --warn: #8A5A00;
+
+  --radius-s: 12px;
+  --radius-m: 18px;
+  --radius-l: 24px;
+
+  --gutter: 20px;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0A0B0A;
+  --surface: #121413;
+  --sunken: #171A18;
+  --ink: #ECEEE9;
+  --muted: #98A09B;
+  --hairline: #262A27;
+  --signal: #6FD3B2;
+  --signal-soft: #6FD3B21F;
+  --sos: #FF6A5D;
+  --on-sos: #2A0805;
+  --sos-soft: #2A1714;
+  --warn: #E0A94D;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  width: 390px;
+  min-height: 844px;
+  margin: 0 auto;
+  position: relative;
+  padding-bottom: 96px;
+}
+
+/* ---- type roles ---- */
+.display {
+  font-size: 40px;
+  font-weight: 300;
+  letter-spacing: -1.2px;
+  line-height: 44px;
+}
+.headline {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+  line-height: 32px;
+}
+.title-l { font-size: 20px; font-weight: 500; line-height: 26px; }
+.title-m { font-size: 16px; font-weight: 500; line-height: 22px; }
+.body-l { font-size: 16px; line-height: 24px; }
+.body-m { font-size: 14px; line-height: 21px; }
+.body-s { font-size: 13px; line-height: 19px; color: var(--muted); }
+.mono {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 17px;
+  letter-spacing: 0.4px;
+}
+
+/* Eyebrows group sections: deliberate part of the Lynq system, matches labelSmall. */
+.eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ---- layout ---- */
+.page { padding: 0 var(--gutter); }
+.section { margin-top: 32px; }
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.gutter-row { display: flex; gap: 12px; }
+
+/* ---- flat card: the only container shape ---- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-m);
+  padding: 20px;
+}
+
+/* ---- status pills ---- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.pill-delivered { background: var(--signal-soft); color: var(--signal); }
+.pill-relayed { background: var(--sunken); color: var(--signal); }
+.pill-sent { background: var(--sunken); color: #54594F; }
+:root[data-theme="dark"] .pill-sent { color: #C9D1CB; }
+.pill-pending { background: var(--sunken); color: var(--muted); }
+.pill-failed { background: var(--sos-soft); color: var(--sos); }
+
+.priority-mark {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+.priority-critical { color: var(--sos); }
+.priority-high { color: var(--warn); }
+
+/* ---- route trace ---- */
+.route { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--muted); letter-spacing: 0.4px; }
+
+/* ---- avatar ---- */
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--sunken);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 500;
+  flex: none;
+}
+.avatar.relaying { background: var(--ink); color: var(--surface); }
+.avatar.sos-sender { background: var(--sos-soft); color: var(--sos); }
+
+/* ---- meta chip ---- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: var(--sunken);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.chip.selected { background: var(--ink); color: var(--surface); }
+
+/* ---- SOS button ---- */
+.sos-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: var(--sos);
+  color: var(--on-sos);
+  border: none;
+  border-radius: var(--radius-l);
+  padding: 20px 22px;
+  text-align: left;
+  cursor: pointer;
+}
+.sos-btn .sub { font-size: 13px; line-height: 19px; color: var(--on-sos); opacity: 0.78; margin-top: 2px; }
+.sos-btn .tag { font-size: 11px; font-weight: 500; letter-spacing: 1.4px; opacity: 0.78; }
+
+/* ---- hairline list rows ---- */
+.rows { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius-m); }
+.row {
+  display: flex;
+  gap: 12px;
+  padding: 14px 20px;
+  align-items: flex-start;
+}
+.row + .row { border-top: 1px solid var(--hairline); }
+
+/* ---- bottom nav ---- */
+.bottomnav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 390px;
+  background: var(--surface);
+  border-top: 1px solid var(--hairline);
+  display: flex;
+  padding: 8px 4px 20px;
+}
+.bottomnav .item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.8px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.bottomnav .item svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.bottomnav .item.active { color: var(--ink); }
+.bottomnav .item.sos { color: var(--sos); }
+
+/* ---- app header ---- */
+.apphead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px var(--gutter) 0;
+}
+.wordmark { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; }
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1.2px;
+  color: var(--signal);
+  text-transform: uppercase;
+}
+.live-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--signal); }
+
+/* status helper: never colour alone — always paired with text */
+.dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.dot.on { background: var(--signal); }
+.dot.off { background: var(--muted); }
+
+/* ---- toggle ---- */
+.toggle {
+  width: 46px; height: 28px;
+  border-radius: 999px;
+  background: var(--sunken);
+  border: 1px solid var(--hairline);
+  position: relative;
+  flex: none;
+}
+.toggle::after {
+  content: "";
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+}
+.toggle.on { background: var(--ink); border-color: var(--ink); }
+.toggle.on::after { left: 21px; background: var(--bg); border-color: transparent; }
+
+/* ---- stat tile ---- */
+.stat .num { font-size: 40px; font-weight: 300; letter-spacing: -1.2px; line-height: 44px; }
+.stat .cap { font-size: 11px; font-weight: 500; letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+
+/* ---- link row inside cards ---- */
+.linkrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
