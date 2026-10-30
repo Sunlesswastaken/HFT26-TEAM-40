@@ -508,8 +508,9 @@ fun MeshGraph(
                                 .size(5.dp)
                                 .background(Color(0xFF30D158), CircleShape),
                         )
+                        val totalNodes = if (peers.isNotEmpty()) peers.size + 1 else 5
                         Text(
-                            text = if (activeSelection != null) "Focus: $activeSelection" else "Obsidian Mesh · 5 Nodes",
+                            text = if (activeSelection != null) "Focus: $activeSelection" else "$totalNodes Nodes",
                             style = AppleCaption,
                             fontSize = 10.5.sp,
                             color = pal.textSecondary,
@@ -601,7 +602,7 @@ fun MeshGraph(
                                     }
                                 }
                                 Text(
-                                    text = if (isYou) "P2P_CLUSTER Coordinator" else "Obsidian cluster node · Seen ${peer?.lastSeen?.asRelative() ?: "just now"}",
+                                    text = if (isYou) "P2P_CLUSTER Coordinator" else "Cluster peer · Seen ${peer?.lastSeen?.asRelative() ?: "just now"}",
                                     style = AppleFootnote,
                                     fontSize = 11.sp,
                                     color = pal.textMuted,

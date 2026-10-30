@@ -111,7 +111,7 @@ fun MeshExplorerScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "Obsidian Constellation · Multi-Hop Topology",
+                    text = "Mesh Constellation · Multi-Hop Topology",
                     style = AppleSubhead,
                     color = pal.textSecondary,
                 )
