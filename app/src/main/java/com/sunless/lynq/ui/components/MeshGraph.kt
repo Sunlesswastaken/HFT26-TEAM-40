@@ -54,6 +54,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.input.pointer.pointerInput
@@ -83,7 +84,7 @@ import kotlin.math.sqrt
  * - Deep near-black charcoal atmosphere (`#0D0E12` to `#07080A`)
  * - Small circular celestial nodes with soft outer halo glows
  * - Delicate, whisper-thin semi-transparent connecting filaments
- * - Natural clustered node distribution (Local Cluster & East Sector)
+ * - Natural clustered node distribution (Local Cluster & East Sector in Demo, Dynamic Orbit in Live)
  * - Obsidian interactive focus: clicking a node highlights its connected sub-graph
  *   and smoothly dims unrelated nodes into the background
  * - Organic harmonic physics drift (Brownian motion like Obsidian's D3 force graph)
@@ -95,6 +96,7 @@ fun MeshGraph(
     peers: List<Peer>,
     modifier: Modifier = Modifier,
     liveRoute: List<String> = emptyList(),
+    isDemoMode: Boolean = false,
     height: Dp? = null,
     interactive: Boolean = true,
     selectedNodeName: String? = null,
@@ -103,6 +105,9 @@ fun MeshGraph(
 ) {
     val pal = Lynq.pal
     val textMeasurer = rememberTextMeasurer()
+
+    // Flag indicating whether to render the signature demo cluster (Aarav, Kabir, Meera, Priya)
+    val isDemo = isDemoMode
 
     // Transform State (Pan & Pinch-to-Zoom)
     var scale by remember { mutableFloatStateOf(1f) }
@@ -146,18 +151,25 @@ fun MeshGraph(
         label = "packetFlow",
     )
 
-    // Layout connectivity & cluster graph definition
-    // Cluster 1 (Local): You, Aarav, Meera
-    // Cluster 2 (East Sector): Kabir, Priya
-    // Bridge: Aarav <-> Kabir
-    val neighborMap = remember {
-        mapOf(
-            "You" to setOf("Aarav", "Meera"),
-            "Aarav" to setOf("You", "Meera", "Kabir"),
-            "Meera" to setOf("You", "Aarav"),
-            "Kabir" to setOf("Aarav", "Priya"),
-            "Priya" to setOf("Kabir"),
-        )
+    // Connectivity & cluster graph definition
+    val neighborMap = remember(peers, isDemo) {
+        if (isDemo) {
+            mapOf(
+                "You" to setOf("Aarav", "Meera"),
+                "Aarav" to setOf("You", "Meera", "Kabir"),
+                "Meera" to setOf("You", "Aarav"),
+                "Kabir" to setOf("Aarav", "Priya"),
+                "Priya" to setOf("Kabir"),
+            )
+        } else {
+            val map = mutableMapOf<String, MutableSet<String>>()
+            map["You"] = mutableSetOf()
+            for (p in peers) {
+                map.getOrPut("You") { mutableSetOf() }.add(p.name)
+                map.getOrPut(p.name) { mutableSetOf() }.add("You")
+            }
+            map.mapValues { it.value.toSet() }
+        }
     }
 
     val isDark = pal.isDark
@@ -210,7 +222,7 @@ fun MeshGraph(
                                     val worldTap = center + (tapOffset - panOffset - center) / scale
 
                                     // Base positions for hit-test
-                                    val posMap = computeObsidianPositions(w, h, floatTime)
+                                    val posMap = computeObsidianPositions(w, h, floatTime, peers, isDemo)
 
                                     var tappedNode: String? = null
                                     var minDistance = Float.MAX_VALUE
@@ -262,13 +274,8 @@ fun MeshGraph(
                 scale(scale, pivot = center) {
 
                     // 2. Compute Natural Clustered Node Positions with Harmonic Drift
-                    val posMap = computeObsidianPositions(w, h, floatTime)
-
+                    val posMap = computeObsidianPositions(w, h, floatTime, peers, isDemo)
                     val youPos = posMap["You"] ?: center
-                    val aaravPos = posMap["Aarav"] ?: center
-                    val meeraPos = posMap["Meera"] ?: center
-                    val kabirPos = posMap["Kabir"] ?: center
-                    val priyaPos = posMap["Priya"] ?: center
 
                     // 3. Define Natural Constellation Graph Edges
                     data class ObsidianEdge(
@@ -279,13 +286,51 @@ fun MeshGraph(
                         val isDirect: Boolean,
                     )
 
-                    val edges = listOf(
-                        ObsidianEdge("You", "Aarav", youPos, aaravPos, isDirect = true),
-                        ObsidianEdge("You", "Meera", youPos, meeraPos, isDirect = true),
-                        ObsidianEdge("Meera", "Aarav", meeraPos, aaravPos, isDirect = false),
-                        ObsidianEdge("Aarav", "Kabir", aaravPos, kabirPos, isDirect = false), // Bridge
-                        ObsidianEdge("Kabir", "Priya", kabirPos, priyaPos, isDirect = false),
-                    )
+                    val edges = mutableListOf<ObsidianEdge>()
+                    if (isDemo) {
+                        val aaravPos = posMap["Aarav"] ?: center
+                        val meeraPos = posMap["Meera"] ?: center
+                        val kabirPos = posMap["Kabir"] ?: center
+                        val priyaPos = posMap["Priya"] ?: center
+
+                        edges.add(ObsidianEdge("You", "Aarav", youPos, aaravPos, isDirect = true))
+                        edges.add(ObsidianEdge("You", "Meera", youPos, meeraPos, isDirect = true))
+                        edges.add(ObsidianEdge("Meera", "Aarav", meeraPos, aaravPos, isDirect = false))
+                        edges.add(ObsidianEdge("Aarav", "Kabir", aaravPos, kabirPos, isDirect = false)) // Bridge
+                        edges.add(ObsidianEdge("Kabir", "Priya", kabirPos, priyaPos, isDirect = false))
+                    } else {
+                        for (peer in peers) {
+                            val peerPos = posMap[peer.name] ?: continue
+                            if (peer.hops <= 1 || peer.connected) {
+                                edges.add(ObsidianEdge("You", peer.name, youPos, peerPos, isDirect = true))
+                            } else {
+                                val relayPeer = peers.firstOrNull { it.relaying && it.name != peer.name }?.name ?: "You"
+                                val relayPos = posMap[relayPeer] ?: youPos
+                                edges.add(ObsidianEdge(relayPeer, peer.name, relayPos, peerPos, isDirect = false))
+                            }
+                        }
+                    }
+
+                    // Ambient radar ripples if Live mode and scanning with no peers yet
+                    if (!isDemo && peers.isEmpty()) {
+                        val radarRadius1 = (35.dp.toPx() + (packetFlow * 85.dp.toPx()))
+                        val radarAlpha1 = (1f - packetFlow) * 0.35f
+                        drawCircle(
+                            color = pal.accentBlue.copy(alpha = radarAlpha1),
+                            radius = radarRadius1,
+                            center = youPos,
+                            style = Stroke(width = 1.2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f))),
+                        )
+                        val progress2 = (packetFlow + 0.5f) % 1f
+                        val radarRadius2 = (15.dp.toPx() + (progress2 * 85.dp.toPx()))
+                        val radarAlpha2 = (1f - progress2) * 0.25f
+                        drawCircle(
+                            color = pal.accentBlue.copy(alpha = radarAlpha2),
+                            radius = radarRadius2,
+                            center = youPos,
+                            style = Stroke(width = 1.dp.toPx()),
+                        )
+                    }
 
                     // Helper to determine if an edge is on the live SOS route
                     val isEdgeOnRoute = { e: ObsidianEdge ->
@@ -392,13 +437,34 @@ fun MeshGraph(
                         val isHub: Boolean,
                     )
 
-                    val nodes = listOf(
-                        ObsidianNode("You", youPos, isYou = true, isRelay = false, onRoute = liveRoute.any { it.equals("You", true) }, isHub = true),
-                        ObsidianNode("Aarav", aaravPos, isYou = false, isRelay = true, onRoute = liveRoute.any { it.equals("Aarav", true) }, isHub = true),
-                        ObsidianNode("Meera", meeraPos, isYou = false, isRelay = true, onRoute = liveRoute.any { it.equals("Meera", true) }, isHub = false),
-                        ObsidianNode("Kabir", kabirPos, isYou = false, isRelay = false, onRoute = liveRoute.any { it.equals("Kabir", true) }, isHub = true),
-                        ObsidianNode("Priya", priyaPos, isYou = false, isRelay = false, onRoute = liveRoute.any { it.equals("Priya", true) }, isHub = false),
-                    )
+                    val nodes = mutableListOf<ObsidianNode>()
+                    nodes.add(ObsidianNode("You", youPos, isYou = true, isRelay = false, onRoute = liveRoute.any { it.equals("You", true) }, isHub = true))
+
+                    if (isDemo) {
+                        val aaravPos = posMap["Aarav"] ?: center
+                        val meeraPos = posMap["Meera"] ?: center
+                        val kabirPos = posMap["Kabir"] ?: center
+                        val priyaPos = posMap["Priya"] ?: center
+
+                        nodes.add(ObsidianNode("Aarav", aaravPos, isYou = false, isRelay = true, onRoute = liveRoute.any { it.equals("Aarav", true) }, isHub = true))
+                        nodes.add(ObsidianNode("Meera", meeraPos, isYou = false, isRelay = true, onRoute = liveRoute.any { it.equals("Meera", true) }, isHub = false))
+                        nodes.add(ObsidianNode("Kabir", kabirPos, isYou = false, isRelay = false, onRoute = liveRoute.any { it.equals("Kabir", true) }, isHub = true))
+                        nodes.add(ObsidianNode("Priya", priyaPos, isYou = false, isRelay = false, onRoute = liveRoute.any { it.equals("Priya", true) }, isHub = false))
+                    } else {
+                        for (peer in peers) {
+                            val pPos = posMap[peer.name] ?: continue
+                            nodes.add(
+                                ObsidianNode(
+                                    name = peer.name,
+                                    pos = pPos,
+                                    isYou = false,
+                                    isRelay = peer.relaying,
+                                    onRoute = liveRoute.any { it.equals(peer.name, true) },
+                                    isHub = peer.relaying || peer.hops > 1,
+                                )
+                            )
+                        }
+                    }
 
                     nodes.forEach { node ->
                         val nodeOpacity = getNodeOpacity(node.name)
@@ -511,14 +577,24 @@ fun MeshGraph(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
+                        val statusColor = when {
+                            isDemo -> Color(0xFFAF52DE)
+                            peers.isEmpty() -> pal.accentBlue
+                            else -> pal.accentGreen
+                        }
+                        val statusText = when {
+                            activeSelection != null -> "Focus: $activeSelection"
+                            isDemo -> "Demo Simulation · 4 Nodes"
+                            peers.isEmpty() -> "Scanning · Bluetooth & Wi-Fi"
+                            else -> "${peers.size} Live Device${if (peers.size > 1) "s" else ""} Online"
+                        }
                         Box(
                             modifier = Modifier
                                 .size(5.dp)
-                                .background(pal.accentGreen, CircleShape),
+                                .background(statusColor, CircleShape),
                         )
-                        val totalNodes = if (peers.isNotEmpty()) peers.size + 1 else 5
                         Text(
-                            text = if (activeSelection != null) "Focus: $activeSelection" else "$totalNodes Nodes",
+                            text = statusText,
                             style = AppleCaption,
                             fontSize = 10.5.sp,
                             color = pal.textSecondary,
@@ -610,7 +686,7 @@ fun MeshGraph(
                                     }
                                 }
                                 Text(
-                                    text = if (isYou) "P2P_CLUSTER Coordinator" else "Cluster peer · Seen ${peer?.lastSeen?.asRelative() ?: "just now"}",
+                                    text = if (isYou) "P2P_CLUSTER Coordinator" else "${peer?.id?.take(8) ?: "Node"} · Seen ${peer?.lastSeen?.asRelative() ?: "just now"}",
                                     style = AppleFootnote,
                                     fontSize = 11.sp,
                                     color = pal.textMuted,
@@ -623,7 +699,7 @@ fun MeshGraph(
                                         shape = RoundedCornerShape(10.dp),
                                         color = pal.accentBlue.copy(alpha = 0.18f),
                                         border = BorderStroke(0.5.dp, pal.accentBlue.copy(alpha = 0.4f)),
-                                        modifier = Modifier.clickable { onOpenMessage(activeSelection ?: "") },
+                                        modifier = Modifier.clickable { onOpenMessage(peer?.id ?: peer?.name ?: activeSelection ?: "") },
                                     ) {
                                         Row(
                                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
@@ -703,18 +779,19 @@ fun MeshGraph(
 
 /**
  * Calculates organic cluster distribution with subtle harmonic physics drift.
- * Preserves the exact aspect ratio of the constellation across both wide (Dashboard)
- * and tall (MeshExplorer) canvases, eliminating vertical stretching and lateral squishing.
+ * In Demo mode, renders the signature 5-node clustered topology (You, Aarav, Meera, Kabir, Priya).
+ * In Live mode, dynamically positions actual physical devices discovered and connected.
  */
-private fun computeObsidianPositions(w: Float, h: Float, floatTime: Float): Map<String, Offset> {
+private fun computeObsidianPositions(
+    w: Float,
+    h: Float,
+    floatTime: Float,
+    peers: List<Peer>,
+    isDemo: Boolean,
+): Map<String, Offset> {
     val cx = w * 0.48f
     val cy = h * 0.48f
 
-    // In wide/landscape cards (DashboardScreen), aspect ratio is ~1.55 (w ≈ 358, h = 230).
-    // In tall portrait screens (MeshExplorerScreen), h is 500-600+, which previously
-    // stretched Y by ~2.4x while keeping X fixed, causing the constellation to look squished.
-    // By anchoring vertical spread to the natural constellation aspect ratio,
-    // the graph retains its signature celestial beauty across all container sizes.
     val isTallScreen = h > w * 1.15f
     val scaleFactor = if (isTallScreen) 1.20f else 1.0f
 
@@ -728,22 +805,69 @@ private fun computeObsidianPositions(w: Float, h: Float, floatTime: Float): Map<
     val d3 = Offset(cos(floatTime * 0.95f) * 3.5f, -sin(floatTime * 0.95f) * 2.4f)
     val d4 = Offset(-cos(floatTime * 1.1f) * 2.6f, -sin(floatTime * 1.1f) * 3.0f)
 
-    // Cluster 1 (Local): You (center-left), Meera (upper-left), Aarav (bridge-center)
-    val youPos = Offset(cx - effectiveW * 0.16f, cy + effectiveH * 0.04f) + d0
-    val meeraPos = Offset(cx - effectiveW * 0.32f, cy - effectiveH * 0.18f) + d2
-    val aaravPos = Offset(cx + effectiveW * 0.04f, cy - effectiveH * 0.20f) + d1
+    if (isDemo) {
+        // Cluster 1 (Local): You (center-left), Meera (upper-left), Aarav (bridge-center)
+        val youPos = Offset(cx - effectiveW * 0.16f, cy + effectiveH * 0.04f) + d0
+        val meeraPos = Offset(cx - effectiveW * 0.32f, cy - effectiveH * 0.18f) + d2
+        val aaravPos = Offset(cx + effectiveW * 0.04f, cy - effectiveH * 0.20f) + d1
 
-    // Cluster 2 (East Sector): Kabir (center-right hub), Priya (lower-right)
-    val kabirPos = Offset(cx + effectiveW * 0.28f, cy + effectiveH * 0.08f) + d3
-    val priyaPos = Offset(cx + effectiveW * 0.20f, cy + effectiveH * 0.30f) + d4
+        // Cluster 2 (East Sector): Kabir (center-right hub), Priya (lower-right)
+        val kabirPos = Offset(cx + effectiveW * 0.28f, cy + effectiveH * 0.08f) + d3
+        val priyaPos = Offset(cx + effectiveW * 0.20f, cy + effectiveH * 0.30f) + d4
 
-    return mapOf(
-        "You" to youPos,
-        "Aarav" to aaravPos,
-        "Meera" to meeraPos,
-        "Kabir" to kabirPos,
-        "Priya" to priyaPos,
-    )
+        return mapOf(
+            "You" to youPos,
+            "Aarav" to aaravPos,
+            "Meera" to meeraPos,
+            "Kabir" to kabirPos,
+            "Priya" to priyaPos,
+        )
+    }
+
+    // Dynamic Live Hardware Mesh
+    if (peers.isEmpty()) {
+        return mapOf("You" to Offset(cx, cy) + d0)
+    }
+
+    val map = mutableMapOf<String, Offset>()
+    val youPos = Offset(cx - effectiveW * 0.22f, cy) + d0
+    map["You"] = youPos
+
+    when (peers.size) {
+        1 -> {
+            val p0 = peers[0]
+            val p0Pos = Offset(cx + effectiveW * 0.22f, cy) + d1
+            map[p0.name] = p0Pos
+        }
+        2 -> {
+            val p0 = peers[0]
+            val p1 = peers[1]
+            val p0Pos = Offset(cx + effectiveW * 0.22f, cy - effectiveH * 0.24f) + d1
+            val p1Pos = Offset(cx + effectiveW * 0.22f, cy + effectiveH * 0.24f) + d2
+            map[p0.name] = p0Pos
+            map[p1.name] = p1Pos
+        }
+        else -> {
+            val count = peers.size
+            for (i in 0 until count) {
+                val peer = peers[i]
+                val fraction = if (count > 1) i.toFloat() / (count - 1) else 0.5f
+                val angle = -0.95f + fraction * 1.9f // Arc between ~ -55 and +55 deg
+                val dist = effectiveW * 0.36f + (if (peer.hops > 1) effectiveW * 0.14f else 0f)
+                val drift = Offset(
+                    cos(floatTime * 0.9f + i * 1.3f) * 3f,
+                    sin(floatTime * 0.8f + i * 1.3f) * 2.5f,
+                )
+                val pos = Offset(
+                    youPos.x + cos(angle) * dist,
+                    youPos.y + sin(angle) * dist,
+                ) + drift
+                map[peer.name] = pos
+            }
+        }
+    }
+
+    return map
 }
 
 @Composable

@@ -6,6 +6,18 @@
       "sourceType": "github",
       "skillPath": "SKILL.md",
       "computedHash": "9581a1eeeb588b5e56a95ed12e2a2a65d8127b6d5ff1a4b7356ff6c4ca66731d"
+    },
+    "demo-video-creation-skill": {
+      "source": "derrickgong87/demo-video-creation-skill",
+      "sourceType": "github",
+      "skillPath": "demo-video-creation-skill/SKILL.md",
+      "computedHash": "3003867c1b626108ffeb27c92fd4562c59bc329545929680a405ca268e46c299"
+    },
+    "hackflow-ppt": {
+      "source": "qwwzdyj/hackflow-ppt-skill",
+      "sourceType": "github",
+      "skillPath": "skills/hackflow-ppt/SKILL.md",
+      "computedHash": "1ab39e3ced7ba2e48e082cfb803d6011ac2c1bd60e3624ed1a93f86aa07d2035"
     }
   }
 }

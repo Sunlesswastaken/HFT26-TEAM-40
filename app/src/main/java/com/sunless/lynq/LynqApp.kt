@@ -28,38 +28,24 @@ class LynqApp : Application() {
 
         database = LynqDatabase(this)
         cryptoManager = CryptoManager(this)
-        val myDeviceName = "${android.os.Build.MANUFACTURER.replaceFirstChar { it.uppercase() }} ${android.os.Build.MODEL}"
+        val myDeviceName = com.sunless.lynq.util.DeviceNameHelper.getDeviceName(this)
         nearbyManager = NearbyManager(
             context = this,
             localDeviceId = cryptoManager.deviceId,
-            localDeviceName = myDeviceName,
+            initialLocalDeviceName = myDeviceName,
         )
         router = MessageRouter(
             database = database,
             cryptoManager = cryptoManager,
             nearbyManager = nearbyManager,
-            myName = myDeviceName,
+            initialMyName = myDeviceName,
         )
         locationProvider = LocationProvider(this)
 
-        // Pre-seed demo peers if database has no peers so graph and explorer are immediately rich
+        // Clean any legacy demo or phantom unverified peers from database so live mesh only represents actual devices
         appScope.launch {
-            seedInitialPeersIfEmpty()
-        }
-    }
-
-    private suspend fun seedInitialPeersIfEmpty() {
-        if (database.peersFlow.value.isEmpty()) {
-            val now = System.currentTimeMillis()
-            val initialPeers = listOf(
-                Peer(id = "2b7f9c41", name = "Aarav", connected = false, relaying = true, hops = 1, lastSeen = now - 4000),
-                Peer(id = "5d80e2aa", name = "Meera", connected = false, relaying = true, hops = 1, lastSeen = now - 11000),
-                Peer(id = "c14b76f3", name = "Kabir", connected = false, relaying = false, hops = 2, lastSeen = now - 38000),
-                Peer(id = "8ae0d915", name = "Priya", connected = false, relaying = false, hops = 3, lastSeen = now - 96000),
-            )
-            for (p in initialPeers) {
-                database.upsertPeer(p)
-            }
+            database.removeDemoPeers()
+            database.purgePhantomPeers()
         }
     }
 

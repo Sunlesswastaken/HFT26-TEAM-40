@@ -32,4 +32,9 @@ pip-log.txt
 *.keystore
 keystore.properties
 shots/
-docs/
+demo-video/node_modules/
+demo-video/.remotion/
+demo-video/out/
+node_modules/
+.codex/
+

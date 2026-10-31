@@ -26,17 +26,21 @@ import androidx.compose.material.icons.rounded.BrightnessAuto
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Emergency
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.Hub
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.Wifi
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -79,13 +83,66 @@ fun SettingsScreen(
 ) {
     val pal = Lynq.pal
     val isMeshActive by viewModel.isMeshActive.collectAsStateWithLifecycle()
-    val reachableCount by viewModel.reachableCount.collectAsStateWithLifecycle()
-    val peers by viewModel.peers.collectAsStateWithLifecycle()
-    val effectiveReachable = if (peers.isNotEmpty()) reachableCount else DemoData.reachableCount
+    val activeReachable by viewModel.activeReachableCount.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
 
     var autoRelay by remember { mutableStateOf(true) }
     var locationSharing by remember { mutableStateOf(true) }
+
+    val myDeviceName by viewModel.myDeviceName.collectAsStateWithLifecycle()
+    var showEditNameDialog by remember { mutableStateOf(false) }
+    var editingName by remember(myDeviceName) { mutableStateOf(myDeviceName) }
+
+    if (showEditNameDialog) {
+        AlertDialog(
+            onDismissRequest = { showEditNameDialog = false },
+            title = {
+                Text(
+                    text = "Edit Mesh Device Name",
+                    style = AppleHeadline,
+                    fontWeight = FontWeight.Bold,
+                    color = pal.textPrimary,
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "This name is broadcast to nearby peers across the mesh network. By default it uses your Quick Share / device name (e.g. sunless).",
+                        style = AppleFootnote,
+                        color = pal.textSecondary,
+                    )
+                    Spacer(Modifier.height(14.dp))
+                    OutlinedTextField(
+                        value = editingName,
+                        onValueChange = { editingName = it },
+                        singleLine = true,
+                        placeholder = { Text("e.g. sunless") },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.updateDeviceName(editingName)
+                        showEditNameDialog = false
+                    }
+                ) {
+                    Text("Save", color = pal.accentBlue, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.resetDeviceNameToSystem()
+                        showEditNameDialog = false
+                    }
+                ) {
+                    Text("Reset to Quick Share", color = pal.textSecondary)
+                }
+            },
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -93,7 +150,7 @@ fun SettingsScreen(
             .verticalScroll(rememberScrollState())
             .padding(bottom = 16.dp),
     ) {
-        TopBar(reachableCount = effectiveReachable, title = "Settings")
+        TopBar(reachableCount = activeReachable, title = "Settings")
 
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 // Profile Section
@@ -101,21 +158,36 @@ fun SettingsScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clickable {
+                                editingName = myDeviceName
+                                showEditNameDialog = true
+                            }
                             .padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
-                        UserAvatar(name = viewModel.myDeviceName, size = 52.dp, isRelay = true)
+                        UserAvatar(name = myDeviceName, size = 52.dp, isRelay = true)
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = viewModel.myDeviceName,
-                                style = AppleHeadline,
-                                fontWeight = FontWeight.Bold,
-                                color = pal.textPrimary,
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            ) {
+                                Text(
+                                    text = myDeviceName,
+                                    style = AppleHeadline,
+                                    fontWeight = FontWeight.Bold,
+                                    color = pal.textPrimary,
+                                )
+                                Icon(
+                                    imageVector = Icons.Rounded.Edit,
+                                    contentDescription = "Edit name",
+                                    tint = pal.accentBlue,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                            }
                             Spacer(Modifier.height(2.dp))
                             Text(
-                                text = "Android · Keystore Verified",
+                                text = "Quick Share / Mesh Identity · Tap to edit",
                                 style = AppleFootnote,
                                 color = pal.accentGreen,
                             )

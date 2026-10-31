@@ -76,6 +76,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sunless.lynq.ui.LynqViewModel
 
+import androidx.compose.material.icons.rounded.Sensors
+import androidx.compose.ui.text.style.TextAlign
+
 private data class ChatBubble(
     val isMine: Boolean,
     val body: String,
@@ -89,13 +92,11 @@ fun MessagesScreen(
     navController: NavHostController,
     viewModel: LynqViewModel = viewModel(),
 ) {
+    val meshMode by viewModel.meshMode.collectAsStateWithLifecycle()
     val openPeerId by viewModel.openPeerId.collectAsStateWithLifecycle()
-    val peers by viewModel.peers.collectAsStateWithLifecycle()
+    val activePeers by viewModel.activePeers.collectAsStateWithLifecycle()
     val messages by viewModel.messages.collectAsStateWithLifecycle()
-    val reachableCount by viewModel.reachableCount.collectAsStateWithLifecycle()
-
-    val effectivePeers = if (peers.isNotEmpty()) peers else DemoData.peers
-    val effectiveReachable = if (peers.isNotEmpty()) reachableCount else DemoData.reachableCount
+    val activeReachable by viewModel.activeReachableCount.collectAsStateWithLifecycle()
 
     androidx.activity.compose.BackHandler(enabled = openPeerId != null) {
         viewModel.openThread(null)
@@ -114,23 +115,25 @@ fun MessagesScreen(
                     .padding(bottom = 16.dp),
             ) {
                 ThreadList(
-                    reachableCount = effectiveReachable,
-                    peers = effectivePeers,
+                    reachableCount = activeReachable,
+                    peers = activePeers,
                     messages = messages,
                     onOpen = { viewModel.openThread(it) },
                 )
             }
         } else {
-            val selectedPeer = effectivePeers.firstOrNull { it.id == openPeerId } ?: effectivePeers.first()
-            OpenThreadView(
-                peer = selectedPeer,
-                messages = messages
-                    .filter { it.senderId == selectedPeer.id || it.recipientId == selectedPeer.id }
-                    .sortedBy { it.createdAt },
-                onSend = { text -> viewModel.sendChatMessage(selectedPeer, text) },
-                onBack = { viewModel.openThread(null) },
-                modifier = Modifier.fillMaxSize(),
-            )
+            val selectedPeer = activePeers.firstOrNull { it.id == openPeerId } ?: activePeers.firstOrNull()
+            if (selectedPeer != null) {
+                OpenThreadView(
+                    peer = selectedPeer,
+                    messages = messages
+                        .filter { it.senderId == selectedPeer.id || it.recipientId == selectedPeer.id }
+                        .sortedBy { it.createdAt },
+                    onSend = { text -> viewModel.sendChatMessage(selectedPeer, text) },
+                    onBack = { viewModel.openThread(null) },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         }
     }
 }
@@ -164,8 +167,39 @@ private fun ThreadList(
             modifier = Modifier.padding(bottom = 16.dp),
         )
 
-        AppleGroupedCard {
-            sortedPeers.forEachIndexed { index, peer ->
+        if (peers.isEmpty()) {
+            AppleGroupedCard {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Sensors,
+                        contentDescription = null,
+                        tint = pal.accentBlue,
+                        modifier = Modifier.size(36.dp),
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        text = "No Connected Devices",
+                        style = AppleHeadline,
+                        fontWeight = FontWeight.SemiBold,
+                        color = pal.textPrimary,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = "When another phone running Lynq connects over Bluetooth or Wi-Fi Direct, an end-to-end encrypted channel will appear here automatically.\n\nSwitch to Demo Mode from Mesh Graph to test simulated messaging.",
+                        style = AppleFootnote,
+                        color = pal.textSecondary,
+                        textAlign = TextAlign.Center,
+                    )
+                }
+            }
+        } else {
+            AppleGroupedCard {
+                sortedPeers.forEachIndexed { index, peer ->
                 val peerMessages = messages.filter { it.senderId == peer.id || it.recipientId == peer.id }
                 val latest = peerMessages.maxByOrNull { it.createdAt }
                 val preview = latest?.body ?: "Encrypted channel ready (${if (peer.hops == 1) "direct" else "${peer.hops} hops"})"
@@ -238,6 +272,7 @@ private fun ThreadList(
             }
         }
     }
+}
 }
 
 @Composable

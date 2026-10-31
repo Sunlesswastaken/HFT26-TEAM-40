@@ -101,13 +101,13 @@ fun EmergencyScreen(
     viewModel: LynqViewModel = viewModel(),
 ) {
     val pal = Lynq.pal
-    val peers by viewModel.peers.collectAsStateWithLifecycle()
-    val reachableCount by viewModel.reachableCount.collectAsStateWithLifecycle()
+    val activePeers by viewModel.activePeers.collectAsStateWithLifecycle()
+    val reachableCount by viewModel.activeReachableCount.collectAsStateWithLifecycle()
     val alerts by viewModel.alerts.collectAsStateWithLifecycle()
     val activeBroadcast by viewModel.activeSosBroadcasting.collectAsStateWithLifecycle()
     val lastSos by viewModel.lastSentSos.collectAsStateWithLifecycle()
 
-    val effectiveReachable = if (peers.isNotEmpty()) reachableCount else DemoData.reachableCount
+    val effectiveReachable = reachableCount
     val effectiveAlerts = alerts
 
     var selectedCategory by rememberSaveable { mutableStateOf(CATEGORIES.first().name) }
@@ -317,7 +317,7 @@ fun EmergencyScreen(
                     }
                 } else {
                     // LIVE ACTIVE BROADCAST STATE
-                    val currentRoute = lastSos?.routeHistory ?: listOf("You", "Aarav", "Kabir")
+                    val currentRoute = lastSos?.routeHistory ?: (if (activePeers.any { it.connected }) listOf("You", activePeers.first { it.connected }.name) else listOf("You"))
                     val isDelivered = lastSos?.status == DeliveryStatus.DELIVERED
 
                     Surface(

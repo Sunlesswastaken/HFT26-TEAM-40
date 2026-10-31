@@ -42,9 +42,23 @@ class MessageRouter(
     private val database: LynqDatabase,
     private val cryptoManager: CryptoManager,
     private val nearbyManager: NearbyManager,
-    val myName: String = "Sunless",
+    initialMyName: String = "Sunless",
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
 ) {
+    var myName: String = initialMyName
+        private set
+
+    fun updateMyName(newName: String) {
+        val clean = newName.trim()
+        if (clean.isNotBlank() && clean != myName) {
+            myName = clean
+            nearbyManager.updateLocalDeviceName(clean)
+            scope.launch {
+                broadcastPresence()
+            }
+        }
+    }
+
     private val tag = "LynqMessageRouter"
     val myDeviceId: String get() = cryptoManager.deviceId
 
@@ -66,6 +80,20 @@ class MessageRouter(
         scope.launch {
             nearbyManager.connectedPeersFlow.collect { peers ->
                 val currentPeerIds = peers.map { it.id }.toSet()
+
+                // Immediately sync active connections into DB
+                for (peer in peers) {
+                    database.upsertPeer(peer.copy(connected = true, hops = 1, lastSeen = System.currentTimeMillis()))
+                }
+
+                // Mark any previously direct peers as disconnected if no longer in connectedPeers
+                val allPeers = database.peersFlow.value
+                for (p in allPeers) {
+                    if (p.connected && !currentPeerIds.contains(p.id)) {
+                        database.setPeerConnectionState(p.id, false)
+                    }
+                }
+
                 greetedPeerIds.retainAll(currentPeerIds)
 
                 val newPeers = peers.filter { greetedPeerIds.add(it.id) }
