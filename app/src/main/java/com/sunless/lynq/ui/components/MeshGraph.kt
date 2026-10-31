@@ -148,16 +148,15 @@ fun MeshGraph(
 
     // Layout connectivity & cluster graph definition
     // Cluster 1 (Local): You, Aarav, Meera
-    // Cluster 2 (East Sector): Kabir, Priya, Dev
+    // Cluster 2 (East Sector): Kabir, Priya
     // Bridge: Aarav <-> Kabir
     val neighborMap = remember {
         mapOf(
             "You" to setOf("Aarav", "Meera"),
             "Aarav" to setOf("You", "Meera", "Kabir"),
             "Meera" to setOf("You", "Aarav"),
-            "Kabir" to setOf("Aarav", "Priya", "Dev"),
+            "Kabir" to setOf("Aarav", "Priya"),
             "Priya" to setOf("Kabir"),
-            "Dev" to setOf("Kabir"),
         )
     }
 
@@ -270,7 +269,6 @@ fun MeshGraph(
                     val meeraPos = posMap["Meera"] ?: center
                     val kabirPos = posMap["Kabir"] ?: center
                     val priyaPos = posMap["Priya"] ?: center
-                    val devPos = posMap["Dev"] ?: center
 
                     // 3. Define Natural Constellation Graph Edges
                     data class ObsidianEdge(
@@ -287,7 +285,6 @@ fun MeshGraph(
                         ObsidianEdge("Meera", "Aarav", meeraPos, aaravPos, isDirect = false),
                         ObsidianEdge("Aarav", "Kabir", aaravPos, kabirPos, isDirect = false), // Bridge
                         ObsidianEdge("Kabir", "Priya", kabirPos, priyaPos, isDirect = false),
-                        ObsidianEdge("Kabir", "Dev", kabirPos, devPos, isDirect = false),
                     )
 
                     // Helper to determine if an edge is on the live SOS route
@@ -401,7 +398,6 @@ fun MeshGraph(
                         ObsidianNode("Meera", meeraPos, isYou = false, isRelay = true, onRoute = liveRoute.any { it.equals("Meera", true) }, isHub = false),
                         ObsidianNode("Kabir", kabirPos, isYou = false, isRelay = false, onRoute = liveRoute.any { it.equals("Kabir", true) }, isHub = true),
                         ObsidianNode("Priya", priyaPos, isYou = false, isRelay = false, onRoute = liveRoute.any { it.equals("Priya", true) }, isHub = false),
-                        ObsidianNode("Dev", devPos, isYou = false, isRelay = false, onRoute = false, isHub = false),
                     )
 
                     nodes.forEach { node ->
@@ -731,17 +727,15 @@ private fun computeObsidianPositions(w: Float, h: Float, floatTime: Float): Map<
     val d2 = Offset(-sin(floatTime * 1.05f) * 2.8f, cos(floatTime * 1.05f) * 2.8f)
     val d3 = Offset(cos(floatTime * 0.95f) * 3.5f, -sin(floatTime * 0.95f) * 2.4f)
     val d4 = Offset(-cos(floatTime * 1.1f) * 2.6f, -sin(floatTime * 1.1f) * 3.0f)
-    val d5 = Offset(sin(floatTime * 0.75f) * 3.0f, cos(floatTime * 0.75f) * 2.2f)
 
     // Cluster 1 (Local): You (center-left), Meera (upper-left), Aarav (bridge-center)
     val youPos = Offset(cx - effectiveW * 0.16f, cy + effectiveH * 0.04f) + d0
     val meeraPos = Offset(cx - effectiveW * 0.32f, cy - effectiveH * 0.18f) + d2
     val aaravPos = Offset(cx + effectiveW * 0.04f, cy - effectiveH * 0.20f) + d1
 
-    // Cluster 2 (East Sector): Kabir (center-right hub), Priya (lower-right), Dev (upper-right)
+    // Cluster 2 (East Sector): Kabir (center-right hub), Priya (lower-right)
     val kabirPos = Offset(cx + effectiveW * 0.28f, cy + effectiveH * 0.08f) + d3
-    val priyaPos = Offset(cx + effectiveW * 0.18f, cy + effectiveH * 0.30f) + d4
-    val devPos = Offset(cx + effectiveW * 0.36f, cy - effectiveH * 0.16f) + d5
+    val priyaPos = Offset(cx + effectiveW * 0.20f, cy + effectiveH * 0.30f) + d4
 
     return mapOf(
         "You" to youPos,
@@ -749,7 +743,6 @@ private fun computeObsidianPositions(w: Float, h: Float, floatTime: Float): Map<
         "Meera" to meeraPos,
         "Kabir" to kabirPos,
         "Priya" to priyaPos,
-        "Dev" to devPos,
     )
 }
 
