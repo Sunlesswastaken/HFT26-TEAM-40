@@ -1,5 +1,8 @@
 package com.sunless.lynq.ui.screens
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,18 +17,23 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Bluetooth
+import androidx.compose.material.icons.rounded.BrightnessAuto
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Emergency
 import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.Hub
+import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.Wifi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -42,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.sunless.lynq.ui.ThemeMode
 import com.sunless.lynq.demo.DemoData
 import com.sunless.lynq.ui.components.AppleDivider
 import com.sunless.lynq.ui.components.AppleGroupedCard
@@ -73,6 +82,7 @@ fun SettingsScreen(
     val reachableCount by viewModel.reachableCount.collectAsStateWithLifecycle()
     val peers by viewModel.peers.collectAsStateWithLifecycle()
     val effectiveReachable = if (peers.isNotEmpty()) reachableCount else DemoData.reachableCount
+    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
 
     var autoRelay by remember { mutableStateOf(true) }
     var locationSharing by remember { mutableStateOf(true) }
@@ -140,6 +150,43 @@ fun SettingsScreen(
                             contentDescription = null,
                             tint = pal.textMuted,
                             modifier = Modifier.size(18.dp),
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(22.dp))
+
+                // Appearance Section
+                SectionHeader(title = "Appearance")
+                Spacer(Modifier.height(10.dp))
+
+                AppleGroupedCard {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        AppearanceOption(
+                            label = "System",
+                            icon = Icons.Rounded.BrightnessAuto,
+                            selected = themeMode == ThemeMode.SYSTEM,
+                            onClick = { viewModel.setThemeMode(ThemeMode.SYSTEM) },
+                            modifier = Modifier.weight(1f),
+                        )
+                        AppearanceOption(
+                            label = "Light",
+                            icon = Icons.Rounded.LightMode,
+                            selected = themeMode == ThemeMode.LIGHT,
+                            onClick = { viewModel.setThemeMode(ThemeMode.LIGHT) },
+                            modifier = Modifier.weight(1f),
+                        )
+                        AppearanceOption(
+                            label = "Dark",
+                            icon = Icons.Rounded.DarkMode,
+                            selected = themeMode == ThemeMode.DARK,
+                            onClick = { viewModel.setThemeMode(ThemeMode.DARK) },
+                            modifier = Modifier.weight(1f),
                         )
                     }
                 }
@@ -350,5 +397,59 @@ private fun SettingsValueRow(
             style = AppleFootnote,
             color = pal.textSecondary,
         )
+    }
+}
+
+@Composable
+private fun AppearanceOption(
+    label: String,
+    icon: ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val pal = Lynq.pal
+    val borderAnim by animateColorAsState(
+        targetValue = if (selected) pal.accentBlue else pal.borderSubtle,
+        animationSpec = tween(180),
+        label = "themeBorderAnim",
+    )
+    val bgAnim by animateColorAsState(
+        targetValue = if (selected) pal.accentBlue.copy(alpha = 0.14f) else pal.surfaceElevated,
+        animationSpec = tween(180),
+        label = "themeBgAnim",
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (selected) pal.accentBlue else pal.textSecondary,
+        animationSpec = tween(180),
+        label = "themeColorAnim",
+    )
+
+    Surface(
+        onClick = onClick,
+        modifier = modifier.height(64.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = bgAnim,
+        border = BorderStroke(if (selected) 1.5.dp else 0.5.dp, borderAnim),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = contentColor,
+                modifier = Modifier.size(20.dp),
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = label,
+                style = AppleCaption,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                color = contentColor,
+            )
+        }
     }
 }

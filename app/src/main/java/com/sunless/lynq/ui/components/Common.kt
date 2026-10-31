@@ -417,7 +417,7 @@ fun UserAvatar(
             text = initial,
             style = AppleHeadline,
             fontWeight = FontWeight.Bold,
-            color = Color.White,
+            color = if (isCritical || isRelay) Color.White else pal.textPrimary,
         )
     }
 }

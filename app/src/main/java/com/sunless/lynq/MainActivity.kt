@@ -8,6 +8,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -15,13 +17,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sunless.lynq.ui.LynqViewModel
+import com.sunless.lynq.ui.ThemeMode
 import com.sunless.lynq.ui.navigation.AppNavigation
 import com.sunless.lynq.ui.theme.Lynq
 import com.sunless.lynq.ui.theme.LynqTheme
 
 class MainActivity : ComponentActivity() {
+
+    private val viewModel: LynqViewModel by viewModels()
 
     private val requestPermissionsLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
@@ -48,7 +56,15 @@ class MainActivity : ComponentActivity() {
         requestRequiredMeshPermissions()
 
         setContent {
-            LynqTheme {
+            val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+            val isSystemDark = isSystemInDarkTheme()
+            val isDark = when (themeMode) {
+                ThemeMode.SYSTEM -> isSystemDark
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+            }
+
+            LynqTheme(darkTheme = isDark) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -57,6 +73,7 @@ class MainActivity : ComponentActivity() {
                         .imePadding(),
                 ) {
                     AppNavigation(
+                        viewModel = viewModel,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }

@@ -37,7 +37,10 @@ data class LynqPalette(
     val emergencyRed: Color,     // Apple System Red #FF453A (SOS Emergency)
     val emergencyRedGlow: Color, // Soft red aura for SOS
     val onEmergency: Color,      // Text on emergency red (#FFFFFF)
-)
+) {
+    /** Helper property to distinguish between light and dark modes */
+    val isDark: Boolean get() = bg == Color(0xFF000000)
+}
 
 val DarkPalette = LynqPalette(
     bg = Color(0xFF000000),             // Pure Apple OLED Black
@@ -59,6 +62,29 @@ val DarkPalette = LynqPalette(
     warningAmber = Color(0xFFFF9F0A),   // Apple System Orange
     emergencyRed = Color(0xFFFF453A),   // Apple System Red
     emergencyRedGlow = Color(0x33FF453A),
+    onEmergency = Color(0xFFFFFFFF),
+)
+
+val LightPalette = LynqPalette(
+    bg = Color(0xFFF2F2F7),             // Apple System Grouped Background
+    surface = Color(0xFFFFFFFF),        // Apple Secondary System Grouped Background (Pure White Cards)
+    surfaceElevated = Color(0xFFE5E5EA),// Apple Tertiary System Background / System Gray 6
+    surfaceMuted = Color(0xFFD1D1D6),   // Apple Quaternary Fill / System Gray 5
+    border = Color(0x333C3C43),         // Apple Hairline Separator (rgba(60, 60, 67, 0.20))
+    borderSubtle = Color(0x1A3C3C43),   // Apple Divider (rgba(60, 60, 67, 0.10))
+    borderActive = Color(0xFF007AFF),   // Apple System Blue (Light Mode)
+
+    textPrimary = Color(0xFF000000),    // Apple Primary Label (100% Black)
+    textSecondary = Color(0xFF6C6C70),  // Apple Secondary Label
+    textMuted = Color(0xFF8E8E93),      // Apple Tertiary Label
+
+    accentCyan = Color(0xFF00C7BE),     // Apple System Mint/Cyan (Light Mode)
+    accentCyanGlow = Color(0x2000C7BE),
+    accentBlue = Color(0xFF007AFF),     // Apple System Blue (Light Mode)
+    accentGreen = Color(0xFF34C759),    // Apple System Green (Light Mode)
+    warningAmber = Color(0xFFFF9500),   // Apple System Orange (Light Mode)
+    emergencyRed = Color(0xFFFF3B30),   // Apple System Red (Light Mode)
+    emergencyRedGlow = Color(0x30FF3B30),
     onEmergency = Color(0xFFFFFFFF),
 )
 

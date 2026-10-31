@@ -62,6 +62,13 @@ class LynqViewModel(application: Application) : AndroidViewModel(application) {
     private val _openPeerId = MutableStateFlow<String?>(null)
     val openPeerId: StateFlow<String?> = _openPeerId.asStateFlow()
 
+    private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
+    val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
+
+    fun setThemeMode(mode: ThemeMode) {
+        _themeMode.value = mode
+    }
+
     fun openThread(peerId: String?) {
         _openPeerId.value = peerId
     }
@@ -135,4 +142,10 @@ class LynqViewModel(application: Application) : AndroidViewModel(application) {
             router.sendChatMessage(recipient, text, priority)
         }
     }
+}
+
+enum class ThemeMode {
+    SYSTEM,
+    LIGHT,
+    DARK,
 }

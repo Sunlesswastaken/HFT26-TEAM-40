@@ -137,11 +137,11 @@ fun MeshExplorerScreen(
 
             Spacer(Modifier.height(10.dp))
 
-            // Refined Minimalist Obsidian Cluster Status Capsule
+            // Refined Minimalist Cluster Status Capsule
             Surface(
                 shape = RoundedCornerShape(16.dp),
-                color = Color(0xF41C1C1E),
-                border = BorderStroke(0.5.dp, Color(0x33FFFFFF)),
+                color = pal.surface.copy(alpha = 0.94f),
+                border = BorderStroke(0.5.dp, pal.border),
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { showDirectorySheet = true },
@@ -160,7 +160,7 @@ fun MeshExplorerScreen(
                         Box(
                             modifier = Modifier
                                 .size(6.dp)
-                                .background(Color(0xFF30D158), CircleShape),
+                                .background(pal.accentGreen, CircleShape),
                         )
                         Text(
                             text = "${DemoData.peers.size + 1} Discovered Nodes · 2 Relays · Hop Limit 6",
@@ -200,14 +200,14 @@ fun MeshExplorerScreen(
         ModalBottomSheet(
             onDismissRequest = { showDirectorySheet = false },
             sheetState = sheetState,
-            containerColor = Color(0xFF1C1C1E),
+            containerColor = pal.surface,
             contentColor = pal.textPrimary,
             dragHandle = {
                 Box(
                     modifier = Modifier
                         .padding(vertical = 12.dp)
                         .size(width = 36.dp, height = 4.dp)
-                        .background(Color(0x44FFFFFF), RoundedCornerShape(2.dp)),
+                        .background(pal.textMuted.copy(alpha = 0.4f), RoundedCornerShape(2.dp)),
                 )
             },
         ) {

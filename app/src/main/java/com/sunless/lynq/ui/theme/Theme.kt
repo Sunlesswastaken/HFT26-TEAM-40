@@ -1,14 +1,17 @@
 package com.sunless.lynq.ui.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-private val Scheme = darkColorScheme(
+private val DarkScheme = darkColorScheme(
     primary = DarkPalette.accentCyan,
     onPrimary = DarkPalette.bg,
     primaryContainer = DarkPalette.surfaceElevated,
@@ -27,7 +30,26 @@ private val Scheme = darkColorScheme(
     onError = DarkPalette.onEmergency,
 )
 
-/** Modern refined corner curves. */
+private val LightScheme = lightColorScheme(
+    primary = LightPalette.accentCyan,
+    onPrimary = LightPalette.bg,
+    primaryContainer = LightPalette.surfaceElevated,
+    onPrimaryContainer = LightPalette.textPrimary,
+    secondary = LightPalette.accentBlue,
+    onSecondary = Color.White,
+    background = LightPalette.bg,
+    onBackground = LightPalette.textPrimary,
+    surface = LightPalette.surface,
+    onSurface = LightPalette.textPrimary,
+    surfaceVariant = LightPalette.surfaceMuted,
+    onSurfaceVariant = LightPalette.textSecondary,
+    outline = LightPalette.border,
+    outlineVariant = LightPalette.borderSubtle,
+    error = LightPalette.emergencyRed,
+    onError = LightPalette.onEmergency,
+)
+
+/** Modern refined corner curves following Apple HIG specifications. */
 private val ModernShapes = Shapes(
     extraSmall = RoundedCornerShape(6.dp),
     small = RoundedCornerShape(10.dp),
@@ -37,10 +59,16 @@ private val ModernShapes = Shapes(
 )
 
 @Composable
-fun LynqTheme(content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalLynqPalette provides DarkPalette) {
+fun LynqTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit,
+) {
+    val palette = if (darkTheme) DarkPalette else LightPalette
+    val scheme = if (darkTheme) DarkScheme else LightScheme
+
+    CompositionLocalProvider(LocalLynqPalette provides palette) {
         MaterialTheme(
-            colorScheme = Scheme,
+            colorScheme = scheme,
             typography = LynqTypography,
             shapes = ModernShapes,
             content = content,

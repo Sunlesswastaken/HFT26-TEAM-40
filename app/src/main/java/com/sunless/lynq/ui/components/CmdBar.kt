@@ -148,9 +148,9 @@ fun CmdBar(
                     }
                 },
             shape = RoundedCornerShape(28.dp),
-            color = Color(0xF41C1C1E), // Frosted Apple Secondary Background (95% opaque)
-            border = BorderStroke(0.5.dp, Color(0x33FFFFFF)), // Apple delicate hairline
-            shadowElevation = 14.dp,
+            color = pal.surface.copy(alpha = 0.94f), // Frosted Apple Secondary Background
+            border = BorderStroke(0.5.dp, pal.border), // Apple delicate hairline
+            shadowElevation = if (pal.isDark) 14.dp else 8.dp,
         ) {
             BoxWithConstraints(
                 modifier = Modifier

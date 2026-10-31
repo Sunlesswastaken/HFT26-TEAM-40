@@ -307,7 +307,7 @@ fun SosLever(
                         text = label,
                         style = AppleHeadline,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White,
+                        color = pal.textPrimary,
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
@@ -396,7 +396,7 @@ fun HopStep(
                 Icon(
                     imageVector = Icons.Rounded.Check,
                     contentDescription = null,
-                    tint = Color.Black,
+                    tint = Color.White,
                     modifier = Modifier.size(13.dp),
                 )
             } else {

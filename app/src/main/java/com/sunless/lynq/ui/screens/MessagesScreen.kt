@@ -355,7 +355,7 @@ private fun OpenThreadView(
                             Text(
                                 text = chat.body,
                                 style = AppleBody,
-                                color = Color.White,
+                                color = if (chat.isMine) Color.White else pal.textPrimary,
                             )
                             Spacer(Modifier.height(4.dp))
                             Row(

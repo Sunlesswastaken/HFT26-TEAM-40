@@ -161,19 +161,29 @@ fun MeshGraph(
         )
     }
 
+    val isDark = pal.isDark
+    val graphBg = if (isDark) {
+        Brush.radialGradient(
+            colors = listOf(
+                Color(0xFF111319), // Obsidian charcoal inner ambient
+                Color(0xFF07080B), // Deep void outer base
+            ),
+        )
+    } else {
+        Brush.radialGradient(
+            colors = listOf(
+                Color(0xFFFFFFFF), // Crisp light inner ambient
+                Color(0xFFECECF2), // Soft Apple slate outer base
+            ),
+        )
+    }
+
     val boxModifier = modifier
         .fillMaxWidth()
         .then(if (height != null) Modifier.height(height) else Modifier.fillMaxSize())
         .clip(RoundedCornerShape(24.dp))
-        .background(
-            Brush.radialGradient(
-                colors = listOf(
-                    Color(0xFF111319), // Obsidian charcoal inner ambient
-                    Color(0xFF07080B), // Deep void outer base
-                ),
-            ),
-        )
-        .border(0.5.dp, Color(0x24FFFFFF), RoundedCornerShape(24.dp))
+        .background(graphBg)
+        .border(0.5.dp, pal.border, RoundedCornerShape(24.dp))
 
     Box(
         modifier = boxModifier,
@@ -242,7 +252,7 @@ fun MeshGraph(
             )
             dustList.forEach { pt ->
                 drawCircle(
-                    color = Color.White.copy(alpha = 0.045f),
+                    color = if (isDark) Color.White.copy(alpha = 0.045f) else Color.Black.copy(alpha = 0.04f),
                     radius = 0.9.dp.toPx(),
                     center = pt,
                 )
@@ -353,11 +363,13 @@ fun MeshGraph(
                                 center = packetPos,
                             )
                         } else {
-                            // Delicate Obsidian Hairline Filament
+                            // Delicate Constellation Hairline Filament
                             val filamentColor = if (edge.isDirect) {
-                                Color(0xFF6BA3FF).copy(alpha = edgeOpacity) // Subtle soft stellar blue
+                                if (isDark) Color(0xFF6BA3FF).copy(alpha = edgeOpacity)
+                                else pal.accentBlue.copy(alpha = edgeOpacity * 0.85f)
                             } else {
-                                Color(0xFFC7C7CC).copy(alpha = edgeOpacity * 0.75f) // Whisper-thin slate
+                                if (isDark) Color(0xFFC7C7CC).copy(alpha = edgeOpacity * 0.75f)
+                                else Color(0xFF8E8E93).copy(alpha = edgeOpacity * 0.60f)
                             }
                             val strokeWidth = if (edge.isDirect) 1.2f else 0.9f
                             val pathEffect = if (!edge.isDirect) PathEffect.dashPathEffect(floatArrayOf(3.5f, 3.5f)) else null
@@ -397,10 +409,10 @@ fun MeshGraph(
                         val isSelected = activeSelection?.equals(node.name, true) == true
 
                         val baseColor = when {
-                            node.isYou -> Color(0xFF4B96FF) // Stellar Cyan-Blue (matches "You" in bottom legend)
+                            node.isYou -> if (isDark) Color(0xFF4B96FF) else Color(0xFF007AFF) // Stellar Blue
                             node.onRoute -> pal.emergencyRed
-                            node.isRelay -> Color(0xFF32D74B) // Mint / Sage Relay
-                            else -> Color(0xFFC7C7CC) // Pearl / Slate Peer
+                            node.isRelay -> if (isDark) Color(0xFF32D74B) else Color(0xFF34C759) // Mint / Apple Green
+                            else -> if (isDark) Color(0xFFC7C7CC) else Color(0xFF8E8E93) // Peer Gray
                         }
 
                         // Size hierarchy: Hubs (6.5dp), Leaves (5.0dp), You (7.5dp)
@@ -434,9 +446,9 @@ fun MeshGraph(
                             center = node.pos,
                         )
 
-                        // Crisp Deep Charcoal Rim (Separation backing)
+                        // Crisp Node Rim (Separation backing)
                         drawCircle(
-                            color = Color(0xFF090A0D),
+                            color = if (isDark) Color(0xFF090A0D) else Color(0xFFFFFFFF),
                             radius = baseRadius + 1.4.dp.toPx(),
                             center = node.pos,
                         )
@@ -451,9 +463,9 @@ fun MeshGraph(
                         // Refined Obsidian Typography (Clean sans-serif note label)
                         val labelColor = when {
                             node.onRoute -> pal.emergencyRed.copy(alpha = nodeOpacity)
-                            node.isYou -> Color.White.copy(alpha = nodeOpacity)
-                            isSelected -> Color.White.copy(alpha = nodeOpacity)
-                            else -> Color(0xFFE5E5EA).copy(alpha = nodeOpacity * 0.85f)
+                            node.isYou -> pal.textPrimary.copy(alpha = nodeOpacity)
+                            isSelected -> pal.textPrimary.copy(alpha = nodeOpacity)
+                            else -> pal.textSecondary.copy(alpha = nodeOpacity * 0.90f)
                         }
 
                         val labelStyle = TextStyle(
@@ -495,8 +507,8 @@ fun MeshGraph(
                 // Subtle Status Tag
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = Color(0x66181A22),
-                    border = BorderStroke(0.5.dp, Color(0x22FFFFFF)),
+                    color = pal.surface.copy(alpha = 0.92f),
+                    border = BorderStroke(0.5.dp, pal.border),
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
@@ -506,7 +518,7 @@ fun MeshGraph(
                         Box(
                             modifier = Modifier
                                 .size(5.dp)
-                                .background(Color(0xFF30D158), CircleShape),
+                                .background(pal.accentGreen, CircleShape),
                         )
                         val totalNodes = if (peers.isNotEmpty()) peers.size + 1 else 5
                         Text(
@@ -524,8 +536,8 @@ fun MeshGraph(
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Surface(
                             shape = CircleShape,
-                            color = Color(0x66181A22),
-                            border = BorderStroke(0.5.dp, Color(0x22FFFFFF)),
+                            color = pal.surface.copy(alpha = 0.92f),
+                            border = BorderStroke(0.5.dp, pal.border),
                             modifier = Modifier.size(30.dp),
                         ) {
                             IconButton(
@@ -566,8 +578,8 @@ fun MeshGraph(
 
                     Surface(
                         shape = RoundedCornerShape(16.dp),
-                        color = Color(0xE81C1E26),
-                        border = BorderStroke(0.5.dp, Color(0x33FFFFFF)),
+                        color = pal.surface.copy(alpha = 0.95f),
+                        border = BorderStroke(0.5.dp, pal.border),
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Row(
@@ -640,7 +652,7 @@ fun MeshGraph(
 
                                 Surface(
                                     shape = CircleShape,
-                                    color = Color(0x33FFFFFF),
+                                    color = pal.surfaceElevated,
                                     modifier = Modifier.size(26.dp),
                                 ) {
                                     IconButton(
@@ -673,9 +685,9 @@ fun MeshGraph(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        ObsidianLegendDot(color = Color(0xFF4B96FF), label = "You")
-                        ObsidianLegendDot(color = Color(0xFF32D74B), label = "Relay")
-                        ObsidianLegendDot(color = Color(0xFFC7C7CC), label = "Peer")
+                        ObsidianLegendDot(color = if (isDark) Color(0xFF4B96FF) else Color(0xFF007AFF), label = "You")
+                        ObsidianLegendDot(color = if (isDark) Color(0xFF32D74B) else Color(0xFF34C759), label = "Relay")
+                        ObsidianLegendDot(color = if (isDark) Color(0xFFC7C7CC) else Color(0xFF8E8E93), label = "Peer")
                         if (liveRoute.isNotEmpty()) {
                             ObsidianLegendDot(color = pal.emergencyRed, label = "SOS Path")
                         }
@@ -685,7 +697,7 @@ fun MeshGraph(
                         text = "pinch & drag canvas",
                         style = AppleCaption,
                         fontSize = 10.sp,
-                        color = Color(0x55FFFFFF),
+                        color = pal.textMuted,
                     )
                 }
             }
@@ -743,6 +755,7 @@ private fun computeObsidianPositions(w: Float, h: Float, floatTime: Float): Map<
 
 @Composable
 private fun ObsidianLegendDot(color: Color, label: String) {
+    val pal = Lynq.pal
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -754,7 +767,7 @@ private fun ObsidianLegendDot(color: Color, label: String) {
         )
         Text(
             text = label,
-            color = Color(0x88FFFFFF),
+            color = pal.textSecondary,
             style = AppleCaption,
             fontSize = 10.sp,
         )
