@@ -66,9 +66,17 @@ class LynqViewModel(application: Application) : AndroidViewModel(application) {
         _openPeerId.value = peerId
     }
 
+    fun clearAlertHistory() {
+        viewModelScope.launch {
+            database.clearAlertHistory()
+            _lastSentSos.value = null
+        }
+    }
+
     init {
         // Start mesh routing and foreground service
         startMesh()
+        clearAlertHistory()
     }
 
     fun startMesh() {

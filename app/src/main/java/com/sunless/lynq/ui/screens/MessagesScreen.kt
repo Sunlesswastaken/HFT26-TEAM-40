@@ -389,9 +389,11 @@ private fun OpenThreadView(
                         }
                     }
 
-                    // Route breadcrumb
-                    Spacer(Modifier.height(2.dp))
-                    ModernRouteTrace(route = chat.route)
+                    // Route breadcrumb (only show for incoming messages from others)
+                    if (!chat.isMine) {
+                        Spacer(Modifier.height(2.dp))
+                        ModernRouteTrace(route = chat.route)
+                    }
                 }
             }
         }

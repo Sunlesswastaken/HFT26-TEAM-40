@@ -146,6 +146,11 @@ class LynqDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         refreshCache()
     }
 
+    suspend fun clearAlertHistory() = withContext(Dispatchers.IO) {
+        writableDatabase.delete("messages", "type = ?", arrayOf(MessageType.SOS.name))
+        refreshCache()
+    }
+
     fun getMessage(messageId: String): LynqMessage? {
         val cursor = readableDatabase.query(
             "messages",

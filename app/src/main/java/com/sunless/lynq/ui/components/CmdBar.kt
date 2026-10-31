@@ -89,7 +89,8 @@ fun CmdBar(
         )
     }
 
-    val committedIndex = items.indexOfFirst { it.route == currentRoute }.coerceAtLeast(0)
+    var selectedRoute by remember(currentRoute) { mutableStateOf(currentRoute) }
+    val committedIndex = items.indexOfFirst { it.route == selectedRoute }.coerceAtLeast(0)
     var draggingIndex by remember { mutableStateOf<Int?>(null) }
     val visualIndex = draggingIndex ?: committedIndex
 
@@ -102,7 +103,7 @@ fun CmdBar(
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .pointerInput(currentRoute) {
+                .pointerInput(Unit) {
                     awaitPointerEventScope {
                         while (true) {
                             val down = awaitFirstDown(requireUnconsumed = false)
@@ -121,8 +122,9 @@ fun CmdBar(
                                 val event = awaitPointerEvent()
                                 val change = event.changes.firstOrNull { it.id == pointerId }
                                 if (change == null || !change.pressed) {
-                                    // Touch released: commit navigation to the destination tab
+                                    // Touch released: commit navigation to the destination tab immediately
                                     val finalRoute = items[activeIdx].route
+                                    selectedRoute = finalRoute
                                     draggingIndex = null
                                     if (finalRoute != currentRoute) {
                                         onSelect(finalRoute)

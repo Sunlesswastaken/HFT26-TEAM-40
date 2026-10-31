@@ -108,7 +108,7 @@ fun EmergencyScreen(
     val lastSos by viewModel.lastSentSos.collectAsStateWithLifecycle()
 
     val effectiveReachable = if (peers.isNotEmpty()) reachableCount else DemoData.reachableCount
-    val effectiveAlerts = if (alerts.isNotEmpty()) alerts else DemoData.alerts
+    val effectiveAlerts = alerts
 
     var selectedCategory by rememberSaveable { mutableStateOf(CATEGORIES.first().name) }
     var note by rememberSaveable { mutableStateOf("") }
@@ -439,11 +439,50 @@ fun EmergencyScreen(
                 Spacer(Modifier.height(26.dp))
 
                 // Alert History
-                SectionHeader(title = "Alert History")
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    SectionHeader(title = "Alert History")
+                    if (effectiveAlerts.isNotEmpty()) {
+                        Text(
+                            text = "Clear",
+                            style = AppleCaption,
+                            color = pal.accentBlue,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier
+                                .clickable { viewModel.clearAlertHistory() }
+                                .padding(4.dp),
+                        )
+                    }
+                }
                 Spacer(Modifier.height(10.dp))
 
                 AppleGroupedCard {
-                    effectiveAlerts.forEachIndexed { index, alert ->
+                    if (effectiveAlerts.isEmpty()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 20.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.Shield,
+                                contentDescription = null,
+                                tint = pal.accentGreen,
+                                modifier = Modifier.size(18.dp),
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = "No emergency alerts recorded · All clear",
+                                style = AppleFootnote,
+                                color = pal.textMuted,
+                            )
+                        }
+                    } else {
+                        effectiveAlerts.forEachIndexed { index, alert ->
                         if (index > 0) AppleDivider()
                         Row(
                             modifier = Modifier
@@ -499,3 +538,4 @@ fun EmergencyScreen(
             }
         }
     }
+}
