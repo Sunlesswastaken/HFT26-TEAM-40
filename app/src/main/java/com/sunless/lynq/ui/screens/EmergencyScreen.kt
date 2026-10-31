@@ -439,24 +439,11 @@ fun EmergencyScreen(
                 Spacer(Modifier.height(26.dp))
 
                 // Alert History
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    SectionHeader(title = "Alert History")
-                    if (effectiveAlerts.isNotEmpty()) {
-                        Text(
-                            text = "Clear",
-                            style = AppleCaption,
-                            color = pal.accentBlue,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier
-                                .clickable { viewModel.clearAlertHistory() }
-                                .padding(4.dp),
-                        )
-                    }
-                }
+                SectionHeader(
+                    title = "Alert History",
+                    actionText = if (effectiveAlerts.isNotEmpty()) "Clear" else null,
+                    onActionClick = { viewModel.clearAlertHistory() },
+                )
                 Spacer(Modifier.height(10.dp))
 
                 AppleGroupedCard {

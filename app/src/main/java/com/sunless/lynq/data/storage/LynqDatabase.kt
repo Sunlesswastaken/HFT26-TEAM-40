@@ -234,6 +234,58 @@ class LynqDatabase(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         refreshCache()
     }
 
+    suspend fun reconcilePeer(name: String, newPeerId: String, newPublicKey: String?) = withContext(Dispatchers.IO) {
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            // Find any old peer with the same name but different peer_id (e.g. from app reinstallation)
+            val cursor = db.query(
+                "peers",
+                arrayOf("peer_id"),
+                "name = ? AND peer_id != ?",
+                arrayOf(name, newPeerId),
+                null,
+                null,
+                null,
+            )
+            val oldIds = mutableListOf<String>()
+            cursor.use {
+                while (it.moveToNext()) {
+                    oldIds.add(it.getString(0))
+                }
+            }
+
+            for (oldId in oldIds) {
+                // Migrate message history so old conversations attach to new identity
+                val cvSender = ContentValues().apply { put("sender_id", newPeerId) }
+                db.update("messages", cvSender, "sender_id = ?", arrayOf(oldId))
+
+                val cvRecipient = ContentValues().apply { put("recipient_id", newPeerId) }
+                db.update("messages", cvRecipient, "recipient_id = ?", arrayOf(oldId))
+
+                // Delete the stale duplicate peer
+                db.delete("peers", "peer_id = ?", arrayOf(oldId))
+            }
+
+            // Upsert the new peer
+            val cv = ContentValues().apply {
+                put("peer_id", newPeerId)
+                put("name", name)
+                put("connected", 1)
+                put("relaying", 0)
+                put("hops", 1)
+                put("last_seen", System.currentTimeMillis())
+                put("public_key", newPublicKey)
+            }
+            db.insertWithOnConflict("peers", null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+        refreshCache()
+    }
+
     fun getPeer(peerId: String): Peer? {
         val cursor = readableDatabase.query(
             "peers",

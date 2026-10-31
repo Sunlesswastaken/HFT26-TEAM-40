@@ -60,6 +60,9 @@ class NearbyManager(
     private val _connectedPeersFlow = MutableStateFlow<List<Peer>>(emptyList())
     val connectedPeersFlow: StateFlow<List<Peer>> = _connectedPeersFlow.asStateFlow()
 
+    val connectedEndpointCount: Int get() = connectedEndpoints.size
+    fun isEndpointConnected(endpointId: String?): Boolean = endpointId != null && connectedEndpoints.containsKey(endpointId)
+
     // Incoming raw payloads: Pair(endpointId, rawBytes)
     private val _rawPayloadFlow = MutableSharedFlow<Pair<String, ByteArray>>(extraBufferCapacity = 64)
     val rawPayloadFlow: SharedFlow<Pair<String, ByteArray>> = _rawPayloadFlow.asSharedFlow()

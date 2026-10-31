@@ -255,7 +255,10 @@ class MessageRouter(
 
         // Step 4: If this device is the recipient (or broadcast/SOS):
         // decrypt if applicable, store, notify UI, and send ACK back.
-        val isRecipient = wire.recipientId == myDeviceId
+        val isDirectPeerChat = wire.type == MessageType.CHAT &&
+            nearbyManager.isEndpointConnected(fromEndpointId) &&
+            nearbyManager.connectedEndpointCount == 1
+        val isRecipient = (wire.recipientId != null && wire.recipientId.replace(" ", "").equals(myDeviceId.replace(" ", ""), ignoreCase = true)) || isDirectPeerChat
         val isSosOrBroadcast = wire.isBroadcast
 
         if (wire.type == MessageType.ACK) {
@@ -277,7 +280,7 @@ class MessageRouter(
                 priority = wire.priority,
                 senderId = wire.senderId,
                 senderName = wire.senderName,
-                recipientId = wire.recipientId,
+                recipientId = if (isRecipient) myDeviceId else wire.recipientId,
                 body = decryptedBody,
                 createdAt = wire.createdAt,
                 expiresAt = wire.expiresAt,
@@ -327,24 +330,8 @@ class MessageRouter(
     }
 
     private suspend fun handlePresence(endpointId: String?, wire: WireMessage) {
-        val existing = database.getPeer(wire.senderId)
-        val shouldUpdateDb = existing == null ||
-            existing.name != wire.senderName ||
-            !existing.connected ||
-            existing.publicKey != wire.senderPublicKey
-
-        if (shouldUpdateDb) {
-            val peer = Peer(
-                id = wire.senderId,
-                name = wire.senderName,
-                connected = true,
-                hops = 1,
-                lastSeen = existing?.lastSeen ?: System.currentTimeMillis(),
-                publicKey = wire.senderPublicKey,
-            )
-            database.upsertPeer(peer)
-            Log.i(tag, "Registered presence in DB for ${wire.senderName} (${wire.senderId}) on endpoint $endpointId")
-        }
+        database.reconcilePeer(wire.senderName, wire.senderId, wire.senderPublicKey)
+        Log.i(tag, "Reconciled peer presence in DB for ${wire.senderName} (${wire.senderId}) on endpoint $endpointId")
 
         if (endpointId != null) {
             nearbyManager.updateEndpointIdentity(endpointId, wire.senderId, wire.senderName)
