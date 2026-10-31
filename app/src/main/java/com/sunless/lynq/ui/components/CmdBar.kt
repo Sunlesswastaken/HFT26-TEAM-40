@@ -35,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,6 +90,9 @@ fun CmdBar(
         )
     }
 
+    val currentRouteState by rememberUpdatedState(currentRoute)
+    val onSelectState by rememberUpdatedState(onSelect)
+
     var selectedRoute by remember(currentRoute) { mutableStateOf(currentRoute) }
     val committedIndex = items.indexOfFirst { it.route == selectedRoute }.coerceAtLeast(0)
     var draggingIndex by remember { mutableStateOf<Int?>(null) }
@@ -126,8 +130,8 @@ fun CmdBar(
                                     val finalRoute = items[activeIdx].route
                                     selectedRoute = finalRoute
                                     draggingIndex = null
-                                    if (finalRoute != currentRoute) {
-                                        onSelect(finalRoute)
+                                    if (finalRoute != currentRouteState) {
+                                        onSelectState(finalRoute)
                                     }
                                     break
                                 }

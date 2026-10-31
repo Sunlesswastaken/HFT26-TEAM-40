@@ -111,7 +111,7 @@ fun MessagesScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(bottom = 88.dp),
+                    .padding(bottom = 16.dp),
             ) {
                 ThreadList(
                     reachableCount = effectiveReachable,

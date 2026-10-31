@@ -75,7 +75,7 @@ fun DashboardScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(bottom = 88.dp),
+            .padding(bottom = 16.dp),
     ) {
             TopBar(reachableCount = effectiveReachable, title = "Network")
 

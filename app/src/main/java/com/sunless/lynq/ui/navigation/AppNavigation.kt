@@ -9,8 +9,11 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -31,6 +34,7 @@ import com.sunless.lynq.ui.screens.SettingsScreen
 
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sunless.lynq.ui.LynqViewModel
+import com.sunless.lynq.ui.theme.Lynq
 
 private val TabOrder = mapOf(
     Screen.Dashboard.route to 0,
@@ -56,15 +60,22 @@ fun AppNavigation(
     viewModel: LynqViewModel = viewModel(),
     modifier: Modifier = Modifier,
 ) {
+    val pal = Lynq.pal
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: Screen.Dashboard.route
     val openPeerId by viewModel.openPeerId.collectAsStateWithLifecycle()
     val showCmdBar = currentRoute != Screen.Messages.route || openPeerId == null
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(pal.bg),
+    ) {
         NavHost(
             navController = navController,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
             startDestination = Screen.Dashboard.route,
             enterTransition = {
                 val dir = getSlideDirection(initialState.destination.route, targetState.destination.route)
@@ -103,12 +114,17 @@ fun AppNavigation(
             visible = showCmdBar,
             enter = fadeIn(tween(180)) + slideInVertically(tween(220)) { it / 2 },
             exit = fadeOut(tween(140)) + slideOutVertically(tween(180)) { it / 2 },
-            modifier = Modifier.align(Alignment.BottomCenter),
         ) {
-            CmdBar(
-                currentRoute = currentRoute,
-                onSelect = { navController.navigateTab(it) },
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(pal.bg),
+            ) {
+                CmdBar(
+                    currentRoute = currentRoute,
+                    onSelect = { navController.navigateTab(it) },
+                )
+            }
         }
     }
 }
@@ -119,10 +135,15 @@ fun AppNavigation(
  * rewinding through every screen you ever visited.
  */
 fun NavHostController.navigateTab(route: String) {
-    navigate(route) {
-        popUpTo(graph.findStartDestination().id) { saveState = true }
-        launchSingleTop = true
-        restoreState = true
+    val startDest = graph.findStartDestination()
+    if (route == startDest.route || route == Screen.Dashboard.route) {
+        popBackStack(startDest.id, inclusive = false)
+    } else {
+        navigate(route) {
+            popUpTo(startDest.id) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
     }
 }
 
