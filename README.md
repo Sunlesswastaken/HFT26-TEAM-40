@@ -12,7 +12,7 @@
 | **Team Name**       | **FLUX** (Project: **Lynq**)                                               |
 | **Team Number**     | `TEAM-40` (`HFT26-TEAM-40`)                                                |
 | **Registration ID** | `HFEST26-GJ9WMSBH`                                                         |
-| **Problem Track**   | **Offline Disaster Emergency Communication & Resilient Mesh Relaying**     |
+| **Problem Track**   | **Offline Emergency Messaging System**                                     |
 | **Domain**          | `General Track`                                                            |
 | **Team Leader**     | G N SREEKAR (sreekargn485@gmail.com)                                       |
 | **Institution**     | INSTITUTE OF AERONAUTICAL ENGINEERING                                      |
@@ -27,14 +27,50 @@
 
 ---
 
-## 🎯 Problem Statement & Motivation
+## 🎯 Problem Statement: Offline Emergency Messaging System
 
-During natural disasters (earthquakes, cyclones, catastrophic floods) or civic crises, **cellular towers, fiber backbones, power grids, and internet access collapse completely**. Victims, isolated communities, and volunteer rescue teams are left in communication dead zones where traditional messaging apps (WhatsApp, Signal, SMS) fail.
+### *Track:* **General Track — Offline Emergency Messaging System**
 
-### **The Solution: Lynq**
-**Lynq** is an **offline-first emergency communication mesh network for Android**. Without cellular towers, Wi-Fi routers, or satellite hardware, nearby devices running Lynq autonomously discover one another via Bluetooth Low Energy and Wi-Fi Direct (using Google Nearby Connections in `Strategy.P2P_CLUSTER` mode) and form a **multi-hop peer-to-peer mesh**.
+During catastrophic disasters (earthquakes, cyclones, extreme flooding) or severe civic blackouts, **cellular base towers, power grids, fiber backbones, and internet infrastructure fail completely**. Victims, isolated communities, and rescue personnel are trapped in communicative blackouts where standard internet and cellular messaging apps (WhatsApp, Telegram, SMS) become entirely useless.
 
-When Device A needs to transmit an alert to distant Device D out of direct radio range, the packet travels **hop-by-hop through intermediary devices (A → B → C → D)** with store-and-forward persistence, route tracing, and end-to-end delivery acknowledgements (ACKs).
+### **Our Solution: Lynq**
+**Lynq** is an **offline-first, infrastructure-less emergency communication network for Android**. Without cellular reception, Wi-Fi routers, or specialized satellite gear, nearby standard Android smartphones running Lynq autonomously discover one another via Bluetooth Low Energy and Wi-Fi Direct (using Google Nearby Connections `Strategy.P2P_CLUSTER`) and establish a self-healing **peer-to-peer multi-hop mesh**.
+
+When Device A needs to transmit an alert to distant Device D out of direct radio range, packets travel **hop-by-hop through intermediate devices (A → B → C → D)** with store-and-forward persistence, route history tracing, and cryptographic delivery acknowledgements (ACKs).
+
+---
+
+## 📸 Screenshots & Visual Interface
+
+### 📱 Core Application Flows
+
+| 1. Network Dashboard | 2. Encrypted Messages & Translation | 3. Emergency SOS Broadcaster |
+|:---:|:---:|:---:|
+| ![Network Dashboard](docs/screenshots/1-dashboard.png) | ![Encrypted Messages](docs/screenshots/2-messages.png) | ![Emergency SOS](docs/screenshots/3-emergency.png) |
+| *Live mesh status, active hops, quick SOS* | *E2EE chat, multi-language translation, SitRep* | *Hold-to-broadcast, triage categories, GPS* |
+
+| 4. Mesh Topology Explorer | 5. Live SOS Relay Breadcrumbs | 6. Hardware Identity & Settings |
+|:---:|:---:|:---:|
+| ![Mesh Explorer](docs/screenshots/4-mesh.png) | ![SOS Tracking](docs/screenshots/state-sos-tracking.png) | ![Settings](docs/screenshots/5-settings.png) |
+| *Visual node graph, link metrics, packet paths* | *Multi-hop relay trace (A → B → C → D)* | *Keystore fingerprint, Render backend, TTL* |
+
+### 🖼️ High-Resolution Demo Contact Sheet
+![Lynq Demo Contact Sheet](docs/demo-contact-sheet.jpg)
+
+---
+
+## 🎥 Demo Video & Verification
+
+The repository includes a full high-definition physical multi-device walkthrough:
+- **Local Walkthrough File:** [`docs/lynq-demo-1080p.mp4`](docs/lynq-demo-1080p.mp4)
+- **Live Cloud Backend:** [https://lynq-ai-backend.onrender.com](https://lynq-ai-backend.onrender.com) (Health: `/health`)
+
+### Verified Multi-Device Test Criteria:
+1. **Direct Offline Messaging**: Real-time communication between directly linked phones over Bluetooth/Wi-Fi Direct.
+2. **Multi-Hop Relaying (A → B → C → D)**: Message routed through intermediate nodes with hop limit decrement and route history tagging.
+3. **Emergency SOS Propagation**: Priority flooding across all reachable nodes with non-blocking GPS coordinates.
+4. **End-to-End Cryptography**: Hardware Keystore EC P-256 + AES-256-GCM verification.
+5. **Decoupled AI Situational Reports & Translation**: Live Qwen 2.5 translation into Hindi, Japanese, Bengali, and Spanish without blocking mesh traffic.
 
 ---
 
@@ -160,6 +196,7 @@ Lynq/
 │   ├── architecture.md
 │   ├── networking.md
 │   ├── PROGRESS.md
+│   ├── screenshots/                        # Core UI flow screenshots
 │   └── lynq-demo-1080p.mp4                 # Walkthrough video
 ├── render.yaml                             # 1-Click Render Blueprint autodeploy manifest
 ├── build.gradle.kts
@@ -180,8 +217,8 @@ Lynq/
 #### Build & Run
 ```bash
 # Clone the repository
-git clone https://github.com/Sunlesswastaken/Lynq.git
-cd Lynq
+git clone https://github.com/cbitosc/HFT26-TEAM-40.git
+cd HFT26-TEAM-40
 
 # Build debug APK
 ./gradlew assembleDebug
@@ -240,7 +277,7 @@ All teams must follow the official fork-and-pull-request workflow:
    ```
 5. **Open Pull Request (PR) for Final Submission**:
    - When ready for evaluation, open a **Pull Request** from your fork's `main` branch back to this upstream repository's `main` branch.
-   - **PR Title Format**: `[SUBMISSION] TEAM-40 - FLUX - Offline Disaster Emergency Communication & Resilient Mesh Relaying`
+   - **PR Title Format**: `[SUBMISSION] TEAM-40 - FLUX - Offline Emergency Messaging System`
    - **PR Description Checklist**:
      - 📌 Solution Overview & Approach
      - 🏗️ Architecture & Tech Stack Details
