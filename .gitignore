@@ -32,9 +32,20 @@ pip-log.txt
 *.keystore
 keystore.properties
 shots/
-demo-video/node_modules/
-demo-video/.remotion/
-demo-video/out/
-node_modules/
-.codex/
 
+# -----------------------------
+# Local Agent Skills & CLI Tooling (DO NOT COMMIT)
+# -----------------------------
+.agents/
+skills-lock.json
+.codex/
+node_modules/
+
+# -----------------------------
+# Media, Videos, and Presentations (DO NOT COMMIT)
+# -----------------------------
+*.pptx
+demo-video/
+ppt/
+docs/*.mp4
+docs/*.jpg
