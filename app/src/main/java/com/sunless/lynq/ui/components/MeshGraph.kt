@@ -397,8 +397,8 @@ fun MeshGraph(
                         val isSelected = activeSelection?.equals(node.name, true) == true
 
                         val baseColor = when {
+                            node.isYou -> Color(0xFF4B96FF) // Stellar Cyan-Blue (matches "You" in bottom legend)
                             node.onRoute -> pal.emergencyRed
-                            node.isYou -> Color(0xFF4B96FF) // Stellar Cyan-Blue
                             node.isRelay -> Color(0xFF32D74B) // Mint / Sage Relay
                             else -> Color(0xFFC7C7CC) // Pearl / Slate Peer
                         }
