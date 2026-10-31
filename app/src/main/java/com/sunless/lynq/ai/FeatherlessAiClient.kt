@@ -56,48 +56,76 @@ class FeatherlessAiClient(private val preferences: AiConfigProvider) {
             )
         }
 
-        // If no API key is configured, provide an intelligent local heuristic summary
-        if (config.apiKey.isBlank()) {
+        val isDirectFeatherless = config.baseUrl.contains("api.featherless.ai")
+
+        // If explicitly pointing to raw Featherless API with no key, provide local heuristic
+        if (isDirectFeatherless && config.apiKey.isBlank()) {
             return@withContext Result.success(
                 buildLocalHeuristicSummary(peerName, messages, lang, reason = "Local Heuristic (Featherless API key not set)")
             )
         }
 
         try {
-            val transcript = buildTranscript(peerName, messages)
-            val systemPrompt = """
-                You are Lynq AI, an emergency response intelligence engine in a disconnected disaster mesh network.
-                Analyze this peer-to-peer chat thread and produce situational intelligence.
-                Output strictly raw JSON matching this schema (do NOT wrap in markdown or backticks):
-                {
-                  "overview": "1-2 sentence core situation summary",
-                  "triageLevel": "CRITICAL" or "HIGH" or "NORMAL" or "SAFE",
-                  "category": "Medical" or "Rescue/Trapped" or "Fire" or "Logistics" or "Status Update",
-                  "keyPoints": ["concise fact or need 1", "concise fact or need 2"],
-                  "actionableAdvice": "1 sentence practical advice for responders or user"
+            if (!isDirectFeatherless) {
+                // Call Lynq Render backend service (API key handled server-side)
+                val endpoint = "${config.baseUrl}/v1/summarize"
+                val backendItems = messages.takeLast(15).map { msg ->
+                    BackendMessageItem(
+                        sender = if (msg.senderName == "You") "Local User" else peerName,
+                        body = msg.body,
+                        timestamp = msg.createdAt,
+                    )
                 }
-                Provide the text in $lang.
-            """.trimIndent()
+                val request = BackendSummarizeRequest(
+                    peer_name = peerName,
+                    messages = backendItems,
+                    target_language = lang,
+                    model = config.model,
+                )
+                val responseString = executePost(
+                    endpointUrl = endpoint,
+                    apiKey = config.apiKey,
+                    jsonBody = json.encodeToString(BackendSummarizeRequest.serializer(), request),
+                )
+                val response = json.decodeFromString(ThreadSummary.serializer(), responseString)
+                Result.success(response.copy(language = lang))
+            } else {
+                // Direct Featherless OpenAI-compatible call
+                val transcript = buildTranscript(peerName, messages)
+                val systemPrompt = """
+                    You are Lynq AI, an emergency response intelligence engine in a disconnected disaster mesh network.
+                    Analyze this peer-to-peer chat thread and produce situational intelligence.
+                    Output strictly raw JSON matching this schema (do NOT wrap in markdown or backticks):
+                    {
+                      "overview": "1-2 sentence core situation summary",
+                      "triageLevel": "CRITICAL" or "HIGH" or "NORMAL" or "SAFE",
+                      "category": "Medical" or "Rescue/Trapped" or "Fire" or "Logistics" or "Status Update",
+                      "keyPoints": ["concise fact or need 1", "concise fact or need 2"],
+                      "actionableAdvice": "1 sentence practical advice for responders or user"
+                    }
+                    Provide the text in $lang.
+                """.trimIndent()
 
-            val request = OpenAiChatRequest(
-                model = config.model,
-                messages = listOf(
-                    OpenAiMessage(role = "system", content = systemPrompt),
-                    OpenAiMessage(role = "user", content = "Conversation transcript:\n$transcript"),
-                ),
-                temperature = 0.2,
-                maxTokens = 450,
-            )
+                val request = OpenAiChatRequest(
+                    model = config.model,
+                    messages = listOf(
+                        OpenAiMessage(role = "system", content = systemPrompt),
+                        OpenAiMessage(role = "user", content = "Conversation transcript:\n$transcript"),
+                    ),
+                    temperature = 0.2,
+                    maxTokens = 450,
+                )
 
-            val endpoint = "${config.baseUrl}/chat/completions"
-            val responseString = executePost(endpoint, config.apiKey, json.encodeToString(OpenAiChatRequest.serializer(), request))
+                val endpoint = "${config.baseUrl}/chat/completions"
+                val responseString = executePost(endpoint, config.apiKey, json.encodeToString(OpenAiChatRequest.serializer(), request))
 
-            val response = json.decodeFromString(OpenAiChatResponse.serializer(), responseString)
-            val assistantContent = response.choices.firstOrNull()?.message?.content?.trim()
-                ?: throw IllegalStateException("Empty completion from Featherless API")
+                val response = json.decodeFromString(OpenAiChatResponse.serializer(), responseString)
+                val assistantContent = response.choices.firstOrNull()?.message?.content?.trim()
+                    ?: throw IllegalStateException("Empty completion from Featherless API")
 
-            val parsedSummary = parseSummaryJson(assistantContent, config.model, lang)
-            Result.success(parsedSummary)
+                val parsedSummary = parseSummaryJson(assistantContent, config.model, lang)
+                Result.success(parsedSummary)
+            }
         } catch (e: Exception) {
             // Decoupled fallback: on network failure or timeout, return local heuristic estimate
             val fallback = buildLocalHeuristicSummary(
@@ -121,33 +149,55 @@ class FeatherlessAiClient(private val preferences: AiConfigProvider) {
         val cleanText = text.trim()
         if (cleanText.isBlank()) return@withContext Result.success("")
 
-        if (config.apiKey.isBlank()) {
+        val isDirectFeatherless = config.baseUrl.contains("api.featherless.ai")
+
+        // If explicitly pointing to raw Featherless API with no key, provide offline stub
+        if (isDirectFeatherless && config.apiKey.isBlank()) {
             return@withContext Result.success(localFallbackTranslate(cleanText, targetLanguage))
         }
 
         try {
-            val systemPrompt = "You are Lynq Emergency Translation Engine. Translate the following text directly into $targetLanguage. Preserve all names, coordinates, and emergency terms. Output ONLY the translated text without commentary, prefixes, or quotation marks."
+            if (!isDirectFeatherless) {
+                // Call Lynq Render backend service which holds the Featherless API key server-side
+                val endpoint = "${config.baseUrl}/v1/translate"
+                val request = BackendTranslateRequest(
+                    text = cleanText,
+                    target_language = targetLanguage,
+                    model = config.model,
+                )
+                val responseString = executePost(
+                    endpointUrl = endpoint,
+                    apiKey = config.apiKey,
+                    jsonBody = json.encodeToString(BackendTranslateRequest.serializer(), request),
+                )
+                val response = json.decodeFromString(BackendTranslateResponse.serializer(), responseString)
+                val translated = response.translated.removePrefix("\"").removeSuffix("\"").trim()
+                Result.success(translated.ifBlank { localFallbackTranslate(cleanText, targetLanguage) })
+            } else {
+                // Direct Featherless OpenAI-compatible call
+                val systemPrompt = "You are Lynq Emergency Translation Engine. Translate the following text directly into $targetLanguage. Preserve all names, coordinates, and emergency terms. Output ONLY the translated text without commentary, prefixes, or quotation marks."
 
-            val request = OpenAiChatRequest(
-                model = config.model,
-                messages = listOf(
-                    OpenAiMessage(role = "system", content = systemPrompt),
-                    OpenAiMessage(role = "user", content = cleanText),
-                ),
-                temperature = 0.1,
-                maxTokens = 250,
-            )
+                val request = OpenAiChatRequest(
+                    model = config.model,
+                    messages = listOf(
+                        OpenAiMessage(role = "system", content = systemPrompt),
+                        OpenAiMessage(role = "user", content = cleanText),
+                    ),
+                    temperature = 0.1,
+                    maxTokens = 250,
+                )
 
-            val endpoint = "${config.baseUrl}/chat/completions"
-            val responseString = executePost(endpoint, config.apiKey, json.encodeToString(OpenAiChatRequest.serializer(), request))
+                val endpoint = "${config.baseUrl}/chat/completions"
+                val responseString = executePost(endpoint, config.apiKey, json.encodeToString(OpenAiChatRequest.serializer(), request))
 
-            val response = json.decodeFromString(OpenAiChatResponse.serializer(), responseString)
-            val translated = response.choices.firstOrNull()?.message?.content?.trim()
-                ?: throw IllegalStateException("Empty translation response")
+                val response = json.decodeFromString(OpenAiChatResponse.serializer(), responseString)
+                val translated = response.choices.firstOrNull()?.message?.content?.trim()
+                    ?: throw IllegalStateException("Empty translation response")
 
-            // Clean up any extraneous quotes
-            val cleaned = translated.removePrefix("\"").removeSuffix("\"").trim()
-            Result.success(cleaned)
+                // Clean up any extraneous quotes
+                val cleaned = translated.removePrefix("\"").removeSuffix("\"").trim()
+                Result.success(cleaned)
+            }
         } catch (e: Exception) {
             Result.success(localFallbackTranslate(cleanText, targetLanguage))
         }

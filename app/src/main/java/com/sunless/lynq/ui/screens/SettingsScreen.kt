@@ -208,7 +208,7 @@ fun SettingsScreen(
             text = {
                 Column {
                     Text(
-                        text = "Defaults to official Featherless.ai API, or specify a custom local FastAPI proxy backend URL (e.g. http://10.0.2.2:8000/v1).",
+                        text = "Defaults to your live Render backend (https://lynq-ai-backend.onrender.com). The backend securely holds the Featherless API key so no key is required on client devices.",
                         style = AppleFootnote,
                         color = pal.textSecondary,
                     )
@@ -488,10 +488,21 @@ fun SettingsScreen(
 
                 AppleGroupedCard {
                     SettingsClickableRow(
+                        icon = Icons.Rounded.Dns,
+                        iconBg = pal.accentGreen,
+                        title = "AI Cloud Backend (Render)",
+                        subtitle = if (aiBaseUrl.contains("render.com")) "$aiBaseUrl (Ready)" else aiBaseUrl,
+                        onClick = {
+                            editingBaseUrl = aiBaseUrl
+                            showAiBaseUrlDialog = true
+                        },
+                    )
+                    AppleDivider()
+                    SettingsClickableRow(
                         icon = Icons.Rounded.Key,
-                        iconBg = if (aiApiKey.isNotBlank()) pal.accentGreen else pal.warningAmber,
+                        iconBg = if (aiApiKey.isNotBlank()) pal.accentGreen else Color(0xFF007AFF),
                         title = "Featherless API Key",
-                        subtitle = if (aiApiKey.isNotBlank()) "sk-•••••••• (Configured)" else "Tap to configure (Required for live LLM)",
+                        subtitle = if (aiApiKey.isNotBlank()) "sk-•••••••• (Client Override)" else "Managed by Render Backend (Ready)",
                         onClick = { showAiKeyDialog = true },
                     )
                     AppleDivider()
@@ -509,17 +520,6 @@ fun SettingsScreen(
                         title = "Crisis Translation Language",
                         subtitle = "${LanguageRegistry.find(aiTargetLang).flag} $aiTargetLang (${LanguageRegistry.find(aiTargetLang).nativeName})",
                         onClick = { showAiLangDialog = true },
-                    )
-                    AppleDivider()
-                    SettingsClickableRow(
-                        icon = Icons.Rounded.Dns,
-                        iconBg = Color(0xFF5856D6),
-                        title = "API Base URL",
-                        subtitle = aiBaseUrl,
-                        onClick = {
-                            editingBaseUrl = aiBaseUrl
-                            showAiBaseUrlDialog = true
-                        },
                     )
                 }
 

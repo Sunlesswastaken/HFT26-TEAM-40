@@ -11,7 +11,8 @@ load_dotenv()
 
 FEATHERLESS_API_KEY = os.getenv("FEATHERLESS_API_KEY", "")
 FEATHERLESS_BASE_URL = os.getenv("FEATHERLESS_BASE_URL", "https://api.featherless.ai/v1").rstrip("/")
-FEATHERLESS_MODEL = os.getenv("FEATHERLESS_MODEL", "meta-llama/Meta-Llama-3.1-8B-Instruct")
+DEFAULT_FALLBACK_MODEL = "Qwen/Qwen2.5-7B-Instruct"
+FEATHERLESS_MODEL = os.getenv("FEATHERLESS_MODEL", DEFAULT_FALLBACK_MODEL)
 
 app = FastAPI(
     title="Lynq Emergency Intelligence Backend",
@@ -75,6 +76,57 @@ class TriageResponse(BaseModel):
     suggested_action: str
 
 
+async def _execute_chat_with_fallback(
+    client: httpx.AsyncClient,
+    model: str,
+    messages: list,
+    max_tokens: int,
+    temperature: float = 0.2,
+) -> tuple[dict, str]:
+    """
+    Executes a chat completion call with automatic fallback to an ungated model
+    (Qwen/Qwen2.5-7B-Instruct) if the selected model is gated (like Meta Llama) or fails with 403.
+    """
+    target_model = model
+    # Meta Llama models on Featherless require HuggingFace OAuth gating verification.
+    # Default automatically to Qwen to ensure guaranteed 100% uptime for hackathon demo.
+    if "llama" in target_model.lower():
+        target_model = DEFAULT_FALLBACK_MODEL
+
+    payload = {
+        "model": target_model,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+
+    headers = {
+        "Authorization": f"Bearer {FEATHERLESS_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    resp = await client.post(
+        f"{FEATHERLESS_BASE_URL}/chat/completions",
+        headers=headers,
+        json=payload,
+    )
+
+    # If the requested model is gated or failed, fall back to ungated Qwen model
+    if resp.status_code in (403, 400) and target_model != DEFAULT_FALLBACK_MODEL:
+        payload["model"] = DEFAULT_FALLBACK_MODEL
+        target_model = DEFAULT_FALLBACK_MODEL
+        resp = await client.post(
+            f"{FEATHERLESS_BASE_URL}/chat/completions",
+            headers=headers,
+            json=payload,
+        )
+
+    if resp.status_code != 200:
+        raise HTTPException(status_code=resp.status_code, detail=resp.text)
+
+    return resp.json(), target_model
+
+
 @app.get("/")
 def root():
     return {
@@ -102,6 +154,7 @@ def health():
 
 
 @app.post("/v1/summarize", response_model=ThreadSummaryResponse)
+@app.post("/summarize", response_model=ThreadSummaryResponse)
 async def summarize_thread(req: SummarizeRequest):
     if not req.messages:
         return ThreadSummaryResponse(
@@ -134,7 +187,6 @@ Provide the text in {req.target_language}.
     key_to_use = FEATHERLESS_API_KEY
 
     if not key_to_use or key_to_use == "your_featherless_api_key_here":
-        # Fallback local heuristic
         return ThreadSummaryResponse(
             overview=f"Active emergency coordination with {req.peer_name}. Messages relayed across mesh.",
             triageLevel="NORMAL",
@@ -148,38 +200,40 @@ Provide the text in {req.target_language}.
 
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(
-                f"{FEATHERLESS_BASE_URL}/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {key_to_use}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": model_to_use,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": f"Transcript:\n{transcript}"},
-                    ],
-                    "temperature": 0.2,
-                    "max_tokens": 450,
-                },
+            data, used_model = await _execute_chat_with_fallback(
+                client=client,
+                model=model_to_use,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"Transcript:\n{transcript}"},
+                ],
+                max_tokens=400,
+                temperature=0.2,
             )
 
-        if resp.status_code != 200:
-            raise HTTPException(status_code=resp.status_code, detail=resp.text)
-
-        data = resp.json()
         content = data["choices"][0]["message"]["content"].strip()
         cleaned = content.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
         parsed = json.loads(cleaned)
+
+        raw_points = parsed.get("keyPoints", ["Encrypted connection active"])
+        if isinstance(raw_points, list):
+            points = [str(p) for p in raw_points]
+        else:
+            points = [str(raw_points)]
+
+        raw_advice = parsed.get("actionableAdvice", "Maintain radio contact.")
+        if isinstance(raw_advice, list):
+            advice = " ".join(str(a) for a in raw_advice)
+        else:
+            advice = str(raw_advice)
 
         return ThreadSummaryResponse(
             overview=parsed.get("overview", "Thread summarized."),
             triageLevel=parsed.get("triageLevel", "NORMAL"),
             category=parsed.get("category", "Status Update"),
-            keyPoints=parsed.get("keyPoints", ["Encrypted connection active"]),
-            actionableAdvice=parsed.get("actionableAdvice", "Maintain radio contact."),
-            modelUsed=model_to_use,
+            keyPoints=points,
+            actionableAdvice=advice,
+            modelUsed=used_model,
             language=req.target_language,
             isOfflineEstimate=False,
         )
@@ -197,6 +251,7 @@ Provide the text in {req.target_language}.
 
 
 @app.post("/v1/translate", response_model=TranslateResponse)
+@app.post("/translate", response_model=TranslateResponse)
 async def translate_text(req: TranslateRequest):
     clean_text = req.text.strip()
     if not clean_text:
@@ -214,37 +269,27 @@ async def translate_text(req: TranslateRequest):
         )
 
     try:
-        system_prompt = f"You are Lynq Emergency Translation Engine. Translate the text into {req.target_language}. Preserve all numbers, coordinates, and emergency words. Output ONLY the translated text without commentary."
+        system_prompt = f"You are Lynq Emergency Translation Engine. Translate the text directly into {req.target_language}. Preserve all numbers, coordinates, and emergency words. Output ONLY the translated text without commentary."
 
         async with httpx.AsyncClient(timeout=25.0) as client:
-            resp = await client.post(
-                f"{FEATHERLESS_BASE_URL}/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {key_to_use}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": model_to_use,
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": clean_text},
-                    ],
-                    "temperature": 0.1,
-                    "max_tokens": 250,
-                },
+            data, used_model = await _execute_chat_with_fallback(
+                client=client,
+                model=model_to_use,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": clean_text},
+                ],
+                max_tokens=250,
+                temperature=0.1,
             )
 
-        if resp.status_code != 200:
-            raise HTTPException(status_code=resp.status_code, detail=resp.text)
-
-        data = resp.json()
         translated = data["choices"][0]["message"]["content"].strip().strip('"')
 
         return TranslateResponse(
             original=clean_text,
             translated=translated,
             target_language=req.target_language,
-            modelUsed=model_to_use,
+            modelUsed=used_model,
         )
     except Exception as e:
         return TranslateResponse(

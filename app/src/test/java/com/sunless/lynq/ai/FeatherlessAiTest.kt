@@ -92,17 +92,28 @@ class FeatherlessAiTest {
         assertNotNull(translated)
         assertTrue("Translated text should contain Hindi devanagari characters", translated!!.contains("सुरक्षित"))
     }
+    @Test
+    fun testBackendConfigurationReadiness() {
+        val provider = MockAiConfigProvider(
+            key = "",
+            baseUrl = "https://lynq-ai-backend.onrender.com",
+            lang = "Hindi"
+        )
+        assertTrue("Backend server manages auth, so provider reports ready", provider.hasApiKey())
+        assertEquals("https://lynq-ai-backend.onrender.com", provider.getConfig().baseUrl)
+    }
 }
 
 private class MockAiConfigProvider(
     private val key: String = "",
+    private val baseUrl: String = "https://api.featherless.ai/v1",
     private val lang: String = "Hindi",
 ) : AiConfigProvider {
     override fun getConfig(): AiConfig = AiConfig(
         apiKey = key,
-        baseUrl = "https://api.featherless.ai/v1",
-        model = "meta-llama/Meta-Llama-3.1-8B-Instruct",
+        baseUrl = baseUrl,
+        model = "Qwen/Qwen2.5-7B-Instruct",
         targetLanguage = lang,
     )
-    override fun hasApiKey(): Boolean = key.isNotBlank()
+    override fun hasApiKey(): Boolean = key.isNotBlank() || (!baseUrl.contains("api.featherless.ai") && baseUrl.isNotBlank())
 }

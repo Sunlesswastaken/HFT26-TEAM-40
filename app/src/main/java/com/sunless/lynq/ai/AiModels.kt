@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable
  * Data structures for Featherless AI summarization, translation, and triage classification.
  */
 
+@Serializable
 data class ThreadSummary(
     val overview: String,
     val triageLevel: String, // "CRITICAL", "HIGH", "NORMAL", "SAFE"
@@ -17,6 +18,36 @@ data class ThreadSummary(
     val language: String = "English",
     val isOfflineEstimate: Boolean = false,
     val timestamp: Long = System.currentTimeMillis(),
+)
+
+@Serializable
+data class BackendMessageItem(
+    val sender: String,
+    val body: String,
+    val timestamp: Long? = null,
+)
+
+@Serializable
+data class BackendSummarizeRequest(
+    val peer_name: String = "Survivor",
+    val messages: List<BackendMessageItem>,
+    val target_language: String = "Hindi",
+    val model: String? = null,
+)
+
+@Serializable
+data class BackendTranslateRequest(
+    val text: String,
+    val target_language: String = "Hindi",
+    val model: String? = null,
+)
+
+@Serializable
+data class BackendTranslateResponse(
+    val original: String = "",
+    val translated: String = "",
+    val target_language: String = "Hindi",
+    val modelUsed: String = "",
 )
 
 data class SupportedLanguage(

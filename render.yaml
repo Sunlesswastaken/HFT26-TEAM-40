@@ -15,6 +15,6 @@ services:
       - key: FEATHERLESS_BASE_URL
         value: https://api.featherless.ai/v1
       - key: FEATHERLESS_MODEL
-        value: meta-llama/Meta-Llama-3.1-8B-Instruct
+        value: Qwen/Qwen2.5-7B-Instruct
       - key: PYTHON_VERSION
         value: 3.11.9

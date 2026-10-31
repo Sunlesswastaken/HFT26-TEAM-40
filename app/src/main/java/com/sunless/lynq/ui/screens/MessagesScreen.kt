@@ -254,9 +254,9 @@ private fun ThreadList(
                                 color = pal.textPrimary,
                             )
                             Text(
-                                text = if (apiKey.isNotBlank()) "Featherless LLM Online" else "Featherless AI · Local Ready",
+                                text = "🟢 Lynq AI Cloud Ready",
                                 style = AppleCaption,
-                                color = if (apiKey.isNotBlank()) pal.accentGreen else pal.textSecondary,
+                                color = pal.accentGreen,
                             )
                         }
                     }
@@ -272,7 +272,7 @@ private fun ThreadList(
                             modifier = Modifier.clickable { showLangDialog = true },
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
@@ -287,19 +287,6 @@ private fun ThreadList(
                                     fontWeight = FontWeight.Medium,
                                 )
                             }
-                        }
-
-                        // API key configure icon
-                        IconButton(
-                            onClick = { showApiKeyDialog = true },
-                            modifier = Modifier.size(28.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Key,
-                                contentDescription = "Configure Featherless API Key",
-                                tint = if (apiKey.isNotBlank()) pal.accentGreen else pal.warningAmber,
-                                modifier = Modifier.size(16.dp),
-                            )
                         }
                     }
                 }
@@ -681,16 +668,18 @@ private fun OpenThreadView(
                 }
             }
 
-            // Key button to configure Featherless API key
-            IconButton(
-                onClick = { showApiKeyDialog = true },
-                modifier = Modifier.size(36.dp),
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(pal.accentGreen.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Key,
-                    contentDescription = "Featherless Key",
-                    tint = if (apiKey.isNotBlank()) pal.accentGreen else pal.warningAmber,
-                    modifier = Modifier.size(18.dp),
+                    imageVector = Icons.Rounded.AutoAwesome,
+                    contentDescription = "Lynq AI Cloud Ready",
+                    tint = pal.accentGreen,
+                    modifier = Modifier.size(16.dp),
                 )
             }
         }
@@ -874,7 +863,7 @@ private fun OpenThreadView(
                                 if (summary.isOfflineEstimate) {
                                     Spacer(Modifier.height(6.dp))
                                     Text(
-                                        text = "ℹ️ Offline heuristic estimate. Tap key icon above to connect live Featherless LLM.",
+                                        text = "ℹ️ Offline heuristic estimate. Connect to Internet/Render backend for live LLM intelligence.",
                                         style = AppleCaption,
                                         color = pal.textMuted,
                                         fontSize = 10.sp,

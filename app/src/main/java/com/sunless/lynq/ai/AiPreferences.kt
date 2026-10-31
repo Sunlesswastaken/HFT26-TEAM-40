@@ -60,7 +60,14 @@ open class AiPreferences(context: Context) : AiConfigProvider {
         )
     }
 
-    override fun hasApiKey(): Boolean = _apiKey.value.isNotBlank()
+    /**
+     * Returns true if AI is configured and ready:
+     * Either pointing to the cloud backend (which manages keys server-side),
+     * or a direct client-side Featherless key has been supplied.
+     */
+    override fun hasApiKey(): Boolean = isBackendConfigured() || _apiKey.value.isNotBlank()
+
+    fun isBackendConfigured(): Boolean = _baseUrl.value.isNotBlank() && !_baseUrl.value.contains("api.featherless.ai")
 
     companion object {
         private const val PREFS_NAME = "lynq_ai_prefs"
@@ -69,15 +76,15 @@ open class AiPreferences(context: Context) : AiConfigProvider {
         private const val KEY_MODEL = "featherless_model"
         private const val KEY_TARGET_LANG = "featherless_target_lang"
 
-        const val DEFAULT_BASE_URL = "https://api.featherless.ai/v1"
-        const val DEFAULT_MODEL = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+        const val DEFAULT_BASE_URL = "https://lynq-ai-backend.onrender.com"
+        const val DEFAULT_MODEL = "Qwen/Qwen2.5-7B-Instruct"
         const val DEFAULT_LANGUAGE = "Hindi"
 
         val AVAILABLE_MODELS = listOf(
-            "meta-llama/Meta-Llama-3.1-8B-Instruct",
-            "mistralai/Mistral-7B-Instruct-v0.3",
             "Qwen/Qwen2.5-7B-Instruct",
+            "mistralai/Mistral-7B-Instruct-v0.3",
             "google/gemma-2-9b-it",
+            "meta-llama/Meta-Llama-3.1-8B-Instruct",
         )
     }
 }
