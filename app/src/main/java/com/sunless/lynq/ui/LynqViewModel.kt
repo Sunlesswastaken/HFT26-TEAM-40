@@ -59,6 +59,13 @@ class LynqViewModel(application: Application) : AndroidViewModel(application) {
     private val _lastSentSos = MutableStateFlow<LynqMessage?>(null)
     val lastSentSos: StateFlow<LynqMessage?> = _lastSentSos.asStateFlow()
 
+    private val _openPeerId = MutableStateFlow<String?>(null)
+    val openPeerId: StateFlow<String?> = _openPeerId.asStateFlow()
+
+    fun openThread(peerId: String?) {
+        _openPeerId.value = peerId
+    }
+
     init {
         // Start mesh routing and foreground service
         startMesh()

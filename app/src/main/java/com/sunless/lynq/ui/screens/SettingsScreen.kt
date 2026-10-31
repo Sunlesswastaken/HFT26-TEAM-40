@@ -77,14 +77,13 @@ fun SettingsScreen(
     var autoRelay by remember { mutableStateOf(true) }
     var locationSharing by remember { mutableStateOf(true) }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = 24.dp),
-        ) {
-            TopBar(reachableCount = effectiveReachable, title = "Settings")
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(bottom = 88.dp),
+    ) {
+        TopBar(reachableCount = effectiveReachable, title = "Settings")
 
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 // Profile Section
@@ -241,13 +240,7 @@ fun SettingsScreen(
                 )
             }
         }
-
-        CmdBar(
-            currentRoute = Screen.Settings.route,
-            onSelect = { navController.navigateTab(it) },
-        )
     }
-}
 
 @Composable
 private fun SettingsSwitchRow(

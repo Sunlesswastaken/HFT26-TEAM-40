@@ -71,13 +71,12 @@ fun DashboardScreen(
     val effectivePending = if (messages.isNotEmpty()) pendingMessages.size else DemoData.pendingMessages.size
     val effectiveActivity = if (messages.isNotEmpty()) messages else DemoData.activity
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = 24.dp),
-        ) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(bottom = 88.dp),
+    ) {
             TopBar(reachableCount = effectiveReachable, title = "Network")
 
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -157,15 +156,9 @@ fun DashboardScreen(
                             at = msg.createdAt,
                             onClick = { navController.navigateTab(Screen.Messages.route) },
                         )
-                    }
                 }
             }
         }
-
-        CmdBar(
-            currentRoute = Screen.Dashboard.route,
-            onSelect = { navController.navigateTab(it) },
-        )
     }
 }
 

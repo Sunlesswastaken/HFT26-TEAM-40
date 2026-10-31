@@ -1,19 +1,28 @@
 package com.sunless.lynq.ui.navigation
 
-import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.sunless.lynq.ui.components.CmdBar
 import com.sunless.lynq.ui.screens.DashboardScreen
 import com.sunless.lynq.ui.screens.EmergencyScreen
 import com.sunless.lynq.ui.screens.MeshExplorerScreen
@@ -37,10 +46,9 @@ private fun getSlideDirection(fromRoute: String?, toRoute: String?): Int {
     return if (toIdx >= fromIdx) 1 else -1
 }
 
-// Fluid easeOutQuint / Apple dynamic curve for silky flowy transitions
-private val FluidSpringEasing = CubicBezierEasing(0.22f, 1.0f, 0.36f, 1.0f)
-private const val SLIDE_DURATION = 350
-private const val FADE_DURATION = 260
+// Buttery smooth synchronized slide duration
+private const val SLIDE_DURATION = 300
+private val SlideEasing = FastOutSlowInEasing
 
 @Composable
 fun AppNavigation(
@@ -48,44 +56,60 @@ fun AppNavigation(
     viewModel: LynqViewModel = viewModel(),
     modifier: Modifier = Modifier,
 ) {
-    NavHost(
-        navController = navController,
-        modifier = modifier,
-        startDestination = Screen.Dashboard.route,
-        enterTransition = {
-            val dir = getSlideDirection(initialState.destination.route, targetState.destination.route)
-            slideInHorizontally(
-                animationSpec = tween(SLIDE_DURATION, easing = FluidSpringEasing),
-            ) { fullWidth -> dir * fullWidth } +
-                fadeIn(animationSpec = tween(FADE_DURATION, easing = FastOutSlowInEasing))
-        },
-        exitTransition = {
-            val dir = getSlideDirection(initialState.destination.route, targetState.destination.route)
-            slideOutHorizontally(
-                animationSpec = tween(SLIDE_DURATION, easing = FluidSpringEasing),
-            ) { fullWidth -> -dir * (fullWidth / 3) } +
-                fadeOut(animationSpec = tween(FADE_DURATION, easing = FastOutSlowInEasing))
-        },
-        popEnterTransition = {
-            val dir = getSlideDirection(initialState.destination.route, targetState.destination.route)
-            slideInHorizontally(
-                animationSpec = tween(SLIDE_DURATION, easing = FluidSpringEasing),
-            ) { fullWidth -> -dir * (fullWidth / 3) } +
-                fadeIn(animationSpec = tween(FADE_DURATION, easing = FastOutSlowInEasing))
-        },
-        popExitTransition = {
-            val dir = getSlideDirection(initialState.destination.route, targetState.destination.route)
-            slideOutHorizontally(
-                animationSpec = tween(SLIDE_DURATION, easing = FluidSpringEasing),
-            ) { fullWidth -> dir * fullWidth } +
-                fadeOut(animationSpec = tween(FADE_DURATION, easing = FastOutSlowInEasing))
-        },
-    ) {
-        composable(Screen.Dashboard.route) { DashboardScreen(navController, viewModel) }
-        composable(Screen.Messages.route) { MessagesScreen(navController, viewModel) }
-        composable(Screen.Emergency.route) { EmergencyScreen(navController, viewModel) }
-        composable(Screen.MeshExplorer.route) { MeshExplorerScreen(navController, viewModel) }
-        composable(Screen.Settings.route) { SettingsScreen(navController, viewModel) }
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route ?: Screen.Dashboard.route
+    val openPeerId by viewModel.openPeerId.collectAsStateWithLifecycle()
+    val showCmdBar = currentRoute != Screen.Messages.route || openPeerId == null
+
+    Box(modifier = modifier.fillMaxSize()) {
+        NavHost(
+            navController = navController,
+            modifier = Modifier.fillMaxSize(),
+            startDestination = Screen.Dashboard.route,
+            enterTransition = {
+                val dir = getSlideDirection(initialState.destination.route, targetState.destination.route)
+                slideInHorizontally(
+                    animationSpec = tween(SLIDE_DURATION, easing = SlideEasing),
+                ) { fullWidth -> dir * fullWidth }
+            },
+            exitTransition = {
+                val dir = getSlideDirection(initialState.destination.route, targetState.destination.route)
+                slideOutHorizontally(
+                    animationSpec = tween(SLIDE_DURATION, easing = SlideEasing),
+                ) { fullWidth -> -dir * fullWidth }
+            },
+            popEnterTransition = {
+                val dir = getSlideDirection(initialState.destination.route, targetState.destination.route)
+                slideInHorizontally(
+                    animationSpec = tween(SLIDE_DURATION, easing = SlideEasing),
+                ) { fullWidth -> dir * fullWidth }
+            },
+            popExitTransition = {
+                val dir = getSlideDirection(initialState.destination.route, targetState.destination.route)
+                slideOutHorizontally(
+                    animationSpec = tween(SLIDE_DURATION, easing = SlideEasing),
+                ) { fullWidth -> -dir * fullWidth }
+            },
+        ) {
+            composable(Screen.Dashboard.route) { DashboardScreen(navController, viewModel) }
+            composable(Screen.Messages.route) { MessagesScreen(navController, viewModel) }
+            composable(Screen.Emergency.route) { EmergencyScreen(navController, viewModel) }
+            composable(Screen.MeshExplorer.route) { MeshExplorerScreen(navController, viewModel) }
+            composable(Screen.Settings.route) { SettingsScreen(navController, viewModel) }
+        }
+
+        // Stationary Apple Island Dock anchored at the bottom
+        AnimatedVisibility(
+            visible = showCmdBar,
+            enter = fadeIn(tween(180)) + slideInVertically(tween(220)) { it / 2 },
+            exit = fadeOut(tween(140)) + slideOutVertically(tween(180)) { it / 2 },
+            modifier = Modifier.align(Alignment.BottomCenter),
+        ) {
+            CmdBar(
+                currentRoute = currentRoute,
+                onSelect = { navController.navigateTab(it) },
+            )
+        }
     }
 }
 

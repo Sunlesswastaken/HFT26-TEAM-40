@@ -89,7 +89,7 @@ fun MessagesScreen(
     navController: NavHostController,
     viewModel: LynqViewModel = viewModel(),
 ) {
-    var openPeerId by remember { mutableStateOf<String?>(null) }
+    val openPeerId by viewModel.openPeerId.collectAsStateWithLifecycle()
     val peers by viewModel.peers.collectAsStateWithLifecycle()
     val messages by viewModel.messages.collectAsStateWithLifecycle()
     val reachableCount by viewModel.reachableCount.collectAsStateWithLifecycle()
@@ -98,7 +98,7 @@ fun MessagesScreen(
     val effectiveReachable = if (peers.isNotEmpty()) reachableCount else DemoData.reachableCount
 
     androidx.activity.compose.BackHandler(enabled = openPeerId != null) {
-        openPeerId = null
+        viewModel.openThread(null)
     }
 
     Column(
@@ -109,22 +109,17 @@ fun MessagesScreen(
         if (openPeerId == null) {
             Column(
                 modifier = Modifier
-                    .weight(1f)
+                    .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(bottom = 16.dp),
+                    .padding(bottom = 88.dp),
             ) {
                 ThreadList(
                     reachableCount = effectiveReachable,
                     peers = effectivePeers,
                     messages = messages,
-                    onOpen = { openPeerId = it },
+                    onOpen = { viewModel.openThread(it) },
                 )
             }
-
-            CmdBar(
-                currentRoute = Screen.Messages.route,
-                onSelect = { navController.navigateTab(it) },
-            )
         } else {
             val selectedPeer = effectivePeers.firstOrNull { it.id == openPeerId } ?: effectivePeers.first()
             OpenThreadView(
@@ -133,7 +128,7 @@ fun MessagesScreen(
                     .filter { it.senderId == selectedPeer.id || it.recipientId == selectedPeer.id }
                     .sortedBy { it.createdAt },
                 onSend = { text -> viewModel.sendChatMessage(selectedPeer, text) },
-                onBack = { openPeerId = null },
+                onBack = { viewModel.openThread(null) },
                 modifier = Modifier.fillMaxSize(),
             )
         }

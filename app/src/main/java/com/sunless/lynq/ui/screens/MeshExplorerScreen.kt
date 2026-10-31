@@ -100,7 +100,7 @@ fun MeshExplorerScreen(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 16.dp),
+                .padding(start = 16.dp, end = 16.dp, bottom = 88.dp),
         ) {
             // Refined Subhead
             Row(
@@ -193,11 +193,6 @@ fun MeshExplorerScreen(
 
             Spacer(Modifier.height(8.dp))
         }
-
-        CmdBar(
-            currentRoute = Screen.MeshExplorer.route,
-            onSelect = { navController.navigateTab(it) },
-        )
     }
 
     // Modal Peer Directory & Transmission History Sheet

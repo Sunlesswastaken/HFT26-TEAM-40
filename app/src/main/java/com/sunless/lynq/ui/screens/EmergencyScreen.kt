@@ -131,14 +131,13 @@ fun EmergencyScreen(
         label = "pulseAlpha",
     )
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = 24.dp),
-        ) {
-            TopBar(reachableCount = effectiveReachable, title = "Emergency SOS")
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(bottom = 88.dp),
+    ) {
+        TopBar(reachableCount = effectiveReachable, title = "Emergency SOS")
 
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 Text(
@@ -499,10 +498,4 @@ fun EmergencyScreen(
                 }
             }
         }
-
-        CmdBar(
-            currentRoute = Screen.Emergency.route,
-            onSelect = { navController.navigateTab(it) },
-        )
     }
-}
