@@ -250,6 +250,7 @@ class LynqViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setTargetLanguage(language: String) {
         aiPreferences.setTargetLanguage(language)
+        _messageTranslations.value = emptyMap()
     }
 
     fun summarizeThread(peerId: String, peerName: String, messages: List<LynqMessage>, targetLang: String? = null) {

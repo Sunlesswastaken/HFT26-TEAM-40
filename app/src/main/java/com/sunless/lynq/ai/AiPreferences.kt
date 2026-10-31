@@ -14,13 +14,34 @@ open class AiPreferences(context: Context) : AiConfigProvider {
 
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+    private val initialBaseUrl: String
+    private val initialModel: String
+
+    init {
+        val storedUrl = prefs.getString(KEY_BASE_URL, null)
+        initialBaseUrl = if (storedUrl.isNullOrBlank() || storedUrl.contains("api.featherless.ai")) {
+            prefs.edit().putString(KEY_BASE_URL, DEFAULT_BASE_URL).apply()
+            DEFAULT_BASE_URL
+        } else {
+            storedUrl
+        }
+
+        val storedModel = prefs.getString(KEY_MODEL, null)
+        initialModel = if (storedModel.isNullOrBlank() || storedModel.contains("llama", ignoreCase = true)) {
+            prefs.edit().putString(KEY_MODEL, DEFAULT_MODEL).apply()
+            DEFAULT_MODEL
+        } else {
+            storedModel
+        }
+    }
+
     private val _apiKey = MutableStateFlow(prefs.getString(KEY_API_KEY, "") ?: "")
     val apiKey: StateFlow<String> = _apiKey.asStateFlow()
 
-    private val _baseUrl = MutableStateFlow(prefs.getString(KEY_BASE_URL, DEFAULT_BASE_URL) ?: DEFAULT_BASE_URL)
+    private val _baseUrl = MutableStateFlow(initialBaseUrl)
     val baseUrl: StateFlow<String> = _baseUrl.asStateFlow()
 
-    private val _model = MutableStateFlow(prefs.getString(KEY_MODEL, DEFAULT_MODEL) ?: DEFAULT_MODEL)
+    private val _model = MutableStateFlow(initialModel)
     val model: StateFlow<String> = _model.asStateFlow()
 
     private val _targetLanguage = MutableStateFlow(prefs.getString(KEY_TARGET_LANG, DEFAULT_LANGUAGE) ?: DEFAULT_LANGUAGE)

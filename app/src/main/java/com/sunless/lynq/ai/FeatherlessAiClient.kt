@@ -56,7 +56,8 @@ class FeatherlessAiClient(private val preferences: AiConfigProvider) {
             )
         }
 
-        val isDirectFeatherless = config.baseUrl.contains("api.featherless.ai")
+        val cleanBaseUrl = config.baseUrl.trim().removeSuffix("/")
+        val isDirectFeatherless = cleanBaseUrl.contains("api.featherless.ai")
 
         // If explicitly pointing to raw Featherless API with no key, provide local heuristic
         if (isDirectFeatherless && config.apiKey.isBlank()) {
@@ -68,7 +69,7 @@ class FeatherlessAiClient(private val preferences: AiConfigProvider) {
         try {
             if (!isDirectFeatherless) {
                 // Call Lynq Render backend service (API key handled server-side)
-                val endpoint = "${config.baseUrl}/v1/summarize"
+                val endpoint = "$cleanBaseUrl/v1/summarize"
                 val backendItems = messages.takeLast(15).map { msg ->
                     BackendMessageItem(
                         sender = if (msg.senderName == "You") "Local User" else peerName,
@@ -149,7 +150,8 @@ class FeatherlessAiClient(private val preferences: AiConfigProvider) {
         val cleanText = text.trim()
         if (cleanText.isBlank()) return@withContext Result.success("")
 
-        val isDirectFeatherless = config.baseUrl.contains("api.featherless.ai")
+        val cleanBaseUrl = config.baseUrl.trim().removeSuffix("/")
+        val isDirectFeatherless = cleanBaseUrl.contains("api.featherless.ai")
 
         // If explicitly pointing to raw Featherless API with no key, provide offline stub
         if (isDirectFeatherless && config.apiKey.isBlank()) {
@@ -159,7 +161,8 @@ class FeatherlessAiClient(private val preferences: AiConfigProvider) {
         try {
             if (!isDirectFeatherless) {
                 // Call Lynq Render backend service which holds the Featherless API key server-side
-                val endpoint = "${config.baseUrl}/v1/translate"
+                val endpoint = "$cleanBaseUrl/v1/translate"
+                android.util.Log.d("LynqAI", "Translating via Render backend: $endpoint to $targetLanguage")
                 val request = BackendTranslateRequest(
                     text = cleanText,
                     target_language = targetLanguage,
@@ -187,7 +190,7 @@ class FeatherlessAiClient(private val preferences: AiConfigProvider) {
                     maxTokens = 250,
                 )
 
-                val endpoint = "${config.baseUrl}/chat/completions"
+                val endpoint = "$cleanBaseUrl/chat/completions"
                 val responseString = executePost(endpoint, config.apiKey, json.encodeToString(OpenAiChatRequest.serializer(), request))
 
                 val response = json.decodeFromString(OpenAiChatResponse.serializer(), responseString)
@@ -199,6 +202,7 @@ class FeatherlessAiClient(private val preferences: AiConfigProvider) {
                 Result.success(cleaned)
             }
         } catch (e: Exception) {
+            android.util.Log.w("LynqAI", "Translation fallback used: ${e.localizedMessage}")
             Result.success(localFallbackTranslate(cleanText, targetLanguage))
         }
     }
@@ -411,18 +415,68 @@ class FeatherlessAiClient(private val preferences: AiConfigProvider) {
                     "आग का खतरा, कृपया सतर्क रहें!"
                 else -> "[अनुवाद]: $text"
             }
+            "japanese", "ja" -> when {
+                lower.contains("are you all safe") || lower.contains("are you safe") ->
+                    "皆さん安全ですか？ここでは携帯電話とインターネットが完全にダウンしています。"
+                lower.contains("we're safe") || lower.contains("we are safe") ->
+                    "私たちは無事です。バッテリーパックを持って東のシェルターでメッシュネットワークを構築しました。"
+                lower.contains("two more people") ->
+                    "了解しました。アーラヴのスマホを経由してさらに2人が接続しました。"
+                lower.contains("background") ->
+                    "Lynqをバックグラウンドで起動し続けてください。パケットは自動で中継されます。"
+                lower.contains("medical") ->
+                    "医療支援が必要です！至急対応願います。"
+                lower.contains("trapped") ->
+                    "閉じ込められています、至急救助が必要です！"
+                lower.contains("fire") ->
+                    "火災の危険があります、警戒してください！"
+                else -> "［日本語訳］: $text"
+            }
+            "bengali", "bn" -> when {
+                lower.contains("are you all safe") || lower.contains("are you safe") ->
+                    "আপনারা কি সবাই নিরাপদ? এখানে সেলুলার এবং ইন্টারনেট সম্পূর্ণ বন্ধ রয়েছে।"
+                lower.contains("we're safe") || lower.contains("we are safe") ->
+                    "আমরা নিরাপদ আছি। আমরা ব্যাটারি প্যাক নিয়ে পূর্ব আশ্রয়কেন্দ্রে মেশ নেটওয়ার্ক গড়ে তুলেছি।"
+                lower.contains("two more people") ->
+                    "বুঝেছি, আরভের ফোনের মাধ্যমে আরও দুইজন যুক্ত হয়েছে।"
+                lower.contains("background") ->
+                    "Lynq ব্যাকগ্রাউন্ডে চালু রাখুন। সমস্ত বার্তা স্বয়ংক্রিয়ভাবে রিলে হবে।"
+                lower.contains("medical") ->
+                    "জরুরি চিকিৎসা সহায়তার প্রয়োজন!"
+                lower.contains("trapped") ->
+                    "আটকে পড়েছি, অবিলম্বে উদ্ধার সাহায্য প্রয়োজন!"
+                lower.contains("fire") ->
+                    "আগুনের বিপদ, অনুগ্রহ করে সতর্ক থাকুন!"
+                else -> "[বাংলা অনুবাদ]: $text"
+            }
             "spanish", "es" -> when {
                 lower.contains("are you safe") -> "¿Están todos a salvo? La red celular e internet están caídos."
                 lower.contains("we're safe") || lower.contains("we are safe") -> "Estamos a salvo. Formamos una red mesh en el refugio este."
                 lower.contains("medical") -> "¡Se requiere asistencia médica de emergencia!"
+                lower.contains("trapped") -> "¡Atrapados, se requiere rescate urgente!"
+                lower.contains("fire") -> "¡Peligro de incendio, manténgase alerta!"
                 else -> "[Traducción]: $text"
             }
             "french", "fr" -> when {
                 lower.contains("are you safe") -> "Êtes-vous tous en sécurité ? Le réseau cellulaire est en panne."
-                lower.contains("we're safe") -> "Nous sommes en sécurité dans l'abri est."
+                lower.contains("we're safe") || lower.contains("we are safe") -> "Nous sommes en sécurité dans l'abri est."
+                lower.contains("medical") -> "Assistance médicale urgente requise !"
+                lower.contains("trapped") -> "Piégés, secours d'urgence demandés !"
                 else -> "[Traduction]: $text"
             }
-            else -> text
+            "german", "de" -> when {
+                lower.contains("are you safe") -> "Sind Sie alle in Sicherheit? Mobilfunk und Internet sind ausgefallen."
+                lower.contains("we're safe") || lower.contains("we are safe") -> "Wir sind in Sicherheit in der östlichen Notunterkunft."
+                lower.contains("medical") -> "Dringende medizinische Hilfe erforderlich!"
+                else -> "[Übersetzung]: $text"
+            }
+            "arabic", "ar" -> when {
+                lower.contains("are you safe") -> "هل الجميع بأمان؟ شبكة الهاتف والإنترنت معطلة تماماً هنا."
+                lower.contains("we're safe") || lower.contains("we are safe") -> "نحن بأمان. شكلنا شبكة مِش في المأوى الشرقي."
+                lower.contains("medical") -> "مطلوب مساعدة طبية عاجلة!"
+                else -> "[ترجمة]: $text"
+            }
+            else -> "[$targetLanguage]: $text"
         }
     }
 }
