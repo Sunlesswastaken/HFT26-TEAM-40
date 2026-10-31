@@ -11,6 +11,10 @@ import com.sunless.lynq.domain.model.Peer
 import com.sunless.lynq.domain.model.Priority
 import com.sunless.lynq.service.LynqMeshService
 import com.sunless.lynq.demo.DemoData
+import com.sunless.lynq.ai.AiPreferences
+import com.sunless.lynq.ai.FeatherlessAiClient
+import com.sunless.lynq.ai.ThreadSummary
+import com.sunless.lynq.ai.LanguageRegistry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +36,26 @@ class LynqViewModel(application: Application) : AndroidViewModel(application) {
     private val router = app.router
     private val crypto = app.cryptoManager
     private val locationProvider = app.locationProvider
+
+    val aiPreferences: AiPreferences = app.aiPreferences
+    val aiClient: FeatherlessAiClient = app.aiClient
+
+    val aiApiKey: StateFlow<String> = aiPreferences.apiKey
+    val aiModel: StateFlow<String> = aiPreferences.model
+    val aiBaseUrl: StateFlow<String> = aiPreferences.baseUrl
+    val aiTargetLanguage: StateFlow<String> = aiPreferences.targetLanguage
+
+    private val _threadSummaries = MutableStateFlow<Map<String, ThreadSummary>>(emptyMap())
+    val threadSummaries: StateFlow<Map<String, ThreadSummary>> = _threadSummaries.asStateFlow()
+
+    private val _isSummarizing = MutableStateFlow(false)
+    val isSummarizing: StateFlow<Boolean> = _isSummarizing.asStateFlow()
+
+    private val _messageTranslations = MutableStateFlow<Map<String, String>>(emptyMap())
+    val messageTranslations: StateFlow<Map<String, String>> = _messageTranslations.asStateFlow()
+
+    private val _isTranslatingMap = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+    val isTranslatingMap: StateFlow<Map<String, Boolean>> = _isTranslatingMap.asStateFlow()
 
     val myDeviceId: String = crypto.deviceId
     private val _myDeviceName = MutableStateFlow(router.myName)
@@ -209,6 +233,92 @@ class LynqViewModel(application: Application) : AndroidViewModel(application) {
     fun sendChatMessage(recipient: Peer, text: String, priority: Priority = Priority.NORMAL) {
         viewModelScope.launch {
             router.sendChatMessage(recipient, text, priority)
+        }
+    }
+
+    fun updateAiApiKey(key: String) {
+        aiPreferences.setApiKey(key)
+    }
+
+    fun updateAiModel(model: String) {
+        aiPreferences.setModel(model)
+    }
+
+    fun updateAiBaseUrl(url: String) {
+        aiPreferences.setBaseUrl(url)
+    }
+
+    fun setTargetLanguage(language: String) {
+        aiPreferences.setTargetLanguage(language)
+    }
+
+    fun summarizeThread(peerId: String, peerName: String, messages: List<LynqMessage>, targetLang: String? = null) {
+        viewModelScope.launch {
+            _isSummarizing.value = true
+            try {
+                val result = aiClient.summarizeConversation(
+                    peerName = peerName,
+                    messages = messages,
+                    targetLanguage = targetLang ?: aiTargetLanguage.value,
+                )
+                result.onSuccess { summary ->
+                    val updated = _threadSummaries.value.toMutableMap()
+                    updated[peerId] = summary
+                    _threadSummaries.value = updated
+                }
+            } finally {
+                _isSummarizing.value = false
+            }
+        }
+    }
+
+    fun summarizeMeshSitRep(messages: List<LynqMessage>, targetLang: String? = null) {
+        viewModelScope.launch {
+            _isSummarizing.value = true
+            try {
+                val result = aiClient.generateMeshSitRep(
+                    allMessages = messages,
+                    targetLanguage = targetLang ?: aiTargetLanguage.value,
+                )
+                result.onSuccess { summary ->
+                    val updated = _threadSummaries.value.toMutableMap()
+                    updated["__MESH_ALL__"] = summary
+                    _threadSummaries.value = updated
+                }
+            } finally {
+                _isSummarizing.value = false
+            }
+        }
+    }
+
+    fun translateMessage(messageId: String, text: String, targetLang: String? = null) {
+        viewModelScope.launch {
+            val translating = _isTranslatingMap.value.toMutableMap()
+            translating[messageId] = true
+            _isTranslatingMap.value = translating
+            try {
+                val lang = targetLang ?: aiTargetLanguage.value
+                val result = aiClient.translateText(text, lang)
+                result.onSuccess { translated ->
+                    val map = _messageTranslations.value.toMutableMap()
+                    map[messageId] = translated
+                    _messageTranslations.value = map
+                }
+            } finally {
+                val done = _isTranslatingMap.value.toMutableMap()
+                done[messageId] = false
+                _isTranslatingMap.value = done
+            }
+        }
+    }
+
+    fun toggleMessageTranslation(messageId: String, text: String, targetLang: String? = null) {
+        if (_messageTranslations.value.containsKey(messageId)) {
+            val map = _messageTranslations.value.toMutableMap()
+            map.remove(messageId)
+            _messageTranslations.value = map
+        } else {
+            translateMessage(messageId, text, targetLang)
         }
     }
 }

@@ -27,6 +27,13 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
+#### Autodeploy to Render (Blueprint)
+You can deploy the backend directly to Render with zero CLI setup:
+1. Open [dashboard.render.com/blueprints](https://dashboard.render.com/blueprints).
+2. Click **New Blueprint Instance** and connect this repository.
+3. Render automatically loads [`render.yaml`](render.yaml), asks for your `FEATHERLESS_API_KEY`, and deploys with free SSL.
+4. Set the resulting Render URL in the Lynq app Settings under **API Base URL** (`https://<service>.onrender.com/v1`).
+
 ## Secrets
 
 Nothing sensitive gets committed here.

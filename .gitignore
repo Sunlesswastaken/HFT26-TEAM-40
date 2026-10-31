@@ -46,6 +46,9 @@ node_modules/
 # -----------------------------
 *.pptx
 demo-video/
-ppt/
+ppt/*.pptx
+ppt/rounded_screens/
 docs/*.mp4
 docs/*.jpg
+.~lock.*
+

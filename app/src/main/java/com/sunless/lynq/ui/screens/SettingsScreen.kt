@@ -21,18 +21,25 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Bluetooth
 import androidx.compose.material.icons.rounded.BrightnessAuto
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.Dns
 import androidx.compose.material.icons.rounded.Emergency
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.Hub
+import androidx.compose.material.icons.rounded.Key
+import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.Wifi
+import com.sunless.lynq.ai.AiPreferences
+import com.sunless.lynq.ai.LanguageRegistry
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
@@ -92,6 +99,152 @@ fun SettingsScreen(
     val myDeviceName by viewModel.myDeviceName.collectAsStateWithLifecycle()
     var showEditNameDialog by remember { mutableStateOf(false) }
     var editingName by remember(myDeviceName) { mutableStateOf(myDeviceName) }
+
+    val aiApiKey by viewModel.aiApiKey.collectAsStateWithLifecycle()
+    val aiModel by viewModel.aiModel.collectAsStateWithLifecycle()
+    val aiBaseUrl by viewModel.aiBaseUrl.collectAsStateWithLifecycle()
+    val aiTargetLang by viewModel.aiTargetLanguage.collectAsStateWithLifecycle()
+
+    var showAiKeyDialog by remember { mutableStateOf(false) }
+    var showAiModelDialog by remember { mutableStateOf(false) }
+    var showAiLangDialog by remember { mutableStateOf(false) }
+    var showAiBaseUrlDialog by remember { mutableStateOf(false) }
+    var editingBaseUrl by remember(aiBaseUrl) { mutableStateOf(aiBaseUrl) }
+
+    if (showAiKeyDialog) {
+        FeatherlessApiKeyDialog(
+            currentKey = aiApiKey,
+            onDismiss = { showAiKeyDialog = false },
+            onSave = {
+                viewModel.updateAiApiKey(it)
+                showAiKeyDialog = false
+            },
+        )
+    }
+
+    if (showAiLangDialog) {
+        LanguageSelectorDialog(
+            currentLang = aiTargetLang,
+            onDismiss = { showAiLangDialog = false },
+            onSelect = {
+                viewModel.setTargetLanguage(it)
+                showAiLangDialog = false
+            },
+        )
+    }
+
+    if (showAiModelDialog) {
+        AlertDialog(
+            onDismissRequest = { showAiModelDialog = false },
+            title = {
+                Text(
+                    text = "Select Featherless LLM",
+                    style = AppleHeadline,
+                    fontWeight = FontWeight.Bold,
+                    color = pal.textPrimary,
+                )
+            },
+            text = {
+                Column {
+                    AiPreferences.AVAILABLE_MODELS.forEach { modelName ->
+                        val isSelected = modelName == aiModel
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    viewModel.updateAiModel(modelName)
+                                    showAiModelDialog = false
+                                }
+                                .padding(vertical = 10.dp, horizontal = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = modelName.substringAfterLast("/"),
+                                    style = AppleHeadline,
+                                    fontSize = 15.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSelected) pal.accentBlue else pal.textPrimary,
+                                )
+                                Text(
+                                    text = modelName,
+                                    style = AppleCaption,
+                                    color = pal.textSecondary,
+                                )
+                            }
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Check,
+                                    contentDescription = null,
+                                    tint = pal.accentBlue,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            }
+                        }
+                        AppleDivider()
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showAiModelDialog = false }) {
+                    Text("Cancel", color = pal.textSecondary)
+                }
+            },
+        )
+    }
+
+    if (showAiBaseUrlDialog) {
+        AlertDialog(
+            onDismissRequest = { showAiBaseUrlDialog = false },
+            title = {
+                Text(
+                    text = "AI Endpoint Base URL",
+                    style = AppleHeadline,
+                    fontWeight = FontWeight.Bold,
+                    color = pal.textPrimary,
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Defaults to official Featherless.ai API, or specify a custom local FastAPI proxy backend URL (e.g. http://10.0.2.2:8000/v1).",
+                        style = AppleFootnote,
+                        color = pal.textSecondary,
+                    )
+                    Spacer(Modifier.height(14.dp))
+                    OutlinedTextField(
+                        value = editingBaseUrl,
+                        onValueChange = { editingBaseUrl = it },
+                        singleLine = true,
+                        label = { Text("Base URL") },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.updateAiBaseUrl(editingBaseUrl)
+                        showAiBaseUrlDialog = false
+                    }
+                ) {
+                    Text("Save", color = pal.accentBlue, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        editingBaseUrl = AiPreferences.DEFAULT_BASE_URL
+                        viewModel.updateAiBaseUrl(AiPreferences.DEFAULT_BASE_URL)
+                        showAiBaseUrlDialog = false
+                    }
+                ) {
+                    Text("Reset Default", color = pal.textSecondary)
+                }
+            },
+        )
+    }
 
     if (showEditNameDialog) {
         AlertDialog(
@@ -329,6 +482,49 @@ fun SettingsScreen(
 
                 Spacer(Modifier.height(22.dp))
 
+                // Featherless AI & Intelligence
+                SectionHeader(title = "Featherless AI & Intelligence")
+                Spacer(Modifier.height(10.dp))
+
+                AppleGroupedCard {
+                    SettingsClickableRow(
+                        icon = Icons.Rounded.Key,
+                        iconBg = if (aiApiKey.isNotBlank()) pal.accentGreen else pal.warningAmber,
+                        title = "Featherless API Key",
+                        subtitle = if (aiApiKey.isNotBlank()) "sk-•••••••• (Configured)" else "Tap to configure (Required for live LLM)",
+                        onClick = { showAiKeyDialog = true },
+                    )
+                    AppleDivider()
+                    SettingsClickableRow(
+                        icon = Icons.Rounded.AutoAwesome,
+                        iconBg = Color(0xFFAF52DE),
+                        title = "Active Model",
+                        subtitle = aiModel.substringAfterLast("/"),
+                        onClick = { showAiModelDialog = true },
+                    )
+                    AppleDivider()
+                    SettingsClickableRow(
+                        icon = Icons.Rounded.Language,
+                        iconBg = Color(0xFF007AFF),
+                        title = "Crisis Translation Language",
+                        subtitle = "${LanguageRegistry.find(aiTargetLang).flag} $aiTargetLang (${LanguageRegistry.find(aiTargetLang).nativeName})",
+                        onClick = { showAiLangDialog = true },
+                    )
+                    AppleDivider()
+                    SettingsClickableRow(
+                        icon = Icons.Rounded.Dns,
+                        iconBg = Color(0xFF5856D6),
+                        title = "API Base URL",
+                        subtitle = aiBaseUrl,
+                        onClick = {
+                            editingBaseUrl = aiBaseUrl
+                            showAiBaseUrlDialog = true
+                        },
+                    )
+                }
+
+                Spacer(Modifier.height(22.dp))
+
                 // About
                 SectionHeader(title = "About")
                 Spacer(Modifier.height(10.dp))
@@ -523,5 +719,64 @@ private fun AppearanceOption(
                 color = contentColor,
             )
         }
+    }
+}
+
+@Composable
+private fun SettingsClickableRow(
+    icon: ImageVector,
+    iconBg: Color,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+) {
+    val pal = Lynq.pal
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 13.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.weight(1f),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .background(iconBg, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+            Column {
+                Text(
+                    text = title,
+                    style = AppleHeadline,
+                    color = pal.textPrimary,
+                    fontSize = 15.sp,
+                )
+                Text(
+                    text = subtitle,
+                    style = AppleCaption,
+                    color = pal.textSecondary,
+                )
+            }
+        }
+
+        Icon(
+            imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+            contentDescription = null,
+            tint = pal.textMuted,
+            modifier = Modifier.size(18.dp),
+        )
     }
 }

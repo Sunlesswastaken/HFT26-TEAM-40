@@ -89,6 +89,45 @@ function addFooter(slide, current, total = 10) {
   });
 }
 
+const ROUNDED_SCREENS_DIR = path.resolve(__dirname, 'rounded_screens');
+
+function addPhoneScreenshot(slide, imgName, x, y, h) {
+  const w = h * (1224 / 2720); // 0.45 exact device aspect ratio
+  const imgPath = path.join(ROUNDED_SCREENS_DIR, imgName);
+
+  // Phone outer bezel / chassis (normal subtle rounded frame)
+  slide.addShape(pres.ShapeType.roundRect, {
+    x: x - 0.08,
+    y: y - 0.08,
+    w: w + 0.16,
+    h: h + 0.16,
+    rectRadius: 0.16,
+    fill: { color: '05070A' },
+    line: { color: '243044', width: 2 },
+  });
+
+  // Screen image with normal pre-rounded corners (NO ellipse rounding: true)
+  if (fs.existsSync(imgPath)) {
+    slide.addImage({
+      path: imgPath,
+      x: x,
+      y: y,
+      w: w,
+      h: h,
+    });
+  }
+
+  // Camera notch pill at top
+  slide.addShape(pres.ShapeType.roundRect, {
+    x: x + w / 2 - 0.35,
+    y: y + 0.04,
+    w: 0.7,
+    h: 0.10,
+    rectRadius: 0.05,
+    fill: { color: '000000' },
+  });
+}
+
 // =========================================================================
 // SLIDE 1: Title & Cover Slide
 // =========================================================================
@@ -229,17 +268,7 @@ function addFooter(slide, current, total = 10) {
   });
 
   // Right Side Hero Phone Screenshot
-  const heroImg = path.join(SCREENSHOTS_DIR, '1-dashboard.png');
-  if (fs.existsSync(heroImg)) {
-    slide.addImage({
-      path: heroImg,
-      x: 8.8,
-      y: 0.8,
-      w: 3.6,
-      h: 6.0,
-      rounding: true,
-    });
-  }
+  addPhoneScreenshot(slide, '1-dashboard.png', 9.6, 1.0, 5.6);
 }
 
 // =========================================================================
@@ -447,17 +476,7 @@ function addFooter(slide, current, total = 10) {
   });
 
   // Right Column: Mesh Topology Screenshot
-  const meshImg = path.join(SCREENSHOTS_DIR, '4-mesh.png');
-  if (fs.existsSync(meshImg)) {
-    slide.addImage({
-      path: meshImg,
-      x: 8.8,
-      y: 1.6,
-      w: 3.7,
-      h: 5.2,
-      rounding: true,
-    });
-  }
+  addPhoneScreenshot(slide, '4-mesh.png', 9.6, 1.2, 5.5);
 
   addFooter(slide, 3);
 }

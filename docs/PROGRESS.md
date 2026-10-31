@@ -68,6 +68,18 @@
   - Passed `qc_video.py` with 0 failures and 0 warnings.
   - Generated visual review contact sheet: `docs/demo-contact-sheet.jpg`.
 
+- **Featherless AI Situational Intelligence & Emergency Translation**:
+  - **Decoupled Architecture**: Fully non-blocking AI layer in `com.sunless.lynq.ai` implementing OpenAI-compatible Featherless API (`api.featherless.ai/v1`).
+  - **Thread Situational Summary Card**: Expandable intelligence card at the top of active chats extracting core situation overviews, triage urgency (`CRITICAL`, `HIGH`, `SAFE`, `NORMAL`), category classification, key location/resource points, and actionable responder advice.
+  - **Multi-Language Emergency Translation Engine**:
+    - Supports 8 disaster communication languages: English 🇺🇸, Hindi (हिन्दी) 🇮🇳, Spanish (Español) 🇪🇸, French (Français) 🇫🇷, German (Deutsch) 🇩🇪, Japanese (日本語) 🇯🇵, Arabic (العربية) 🇸🇦, and Bengali (বাংলা) 🇧🇩.
+    - Inline on-demand translation for individual incoming and outgoing chat bubbles with toggle hide/show.
+  - **Mesh SitRep (Situational Report)**: Network-wide synthesis card at the top of the Messages screen to aggregate and summarize packet traffic across all connected mesh nodes.
+  - **Zero-Crash Offline Fallback**: Smart local emergency heuristic engine providing realistic triage estimates and localized translations even before the Featherless API key is entered or when completely offline.
+  - **On-Device Key & Model Configuration**: Direct in-chat API key configuration modal + full Settings controls (API Key, Model picker with Llama-3.1-8B / Mistral / Qwen / Gemma, Base URL, and Default Language).
+  - **Python FastAPI Backend (`backend/`)**: Standalone microservice proxying Featherless API with `/health`, `/v1/summarize`, `/v1/translate`, and `/v1/chat/completions`.
+  - **Unit Test Coverage**: `FeatherlessAiTest` validating language registry lookups, heuristic medical triage classification, safe-status heuristics, and offline translations.
+
 ## Next steps
 
 - Multi-device field verification on physical hardware across 4 devices.

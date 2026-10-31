@@ -19,6 +19,8 @@ class LynqApp : Application() {
     lateinit var nearbyManager: NearbyManager private set
     lateinit var router: MessageRouter private set
     lateinit var locationProvider: LocationProvider private set
+    lateinit var aiPreferences: com.sunless.lynq.ai.AiPreferences private set
+    lateinit var aiClient: com.sunless.lynq.ai.FeatherlessAiClient private set
 
     private val appScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -28,6 +30,8 @@ class LynqApp : Application() {
 
         database = LynqDatabase(this)
         cryptoManager = CryptoManager(this)
+        aiPreferences = com.sunless.lynq.ai.AiPreferences(this)
+        aiClient = com.sunless.lynq.ai.FeatherlessAiClient(aiPreferences)
         val myDeviceName = com.sunless.lynq.util.DeviceNameHelper.getDeviceName(this)
         nearbyManager = NearbyManager(
             context = this,
