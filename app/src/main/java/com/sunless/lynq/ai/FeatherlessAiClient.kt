@@ -413,7 +413,7 @@ class FeatherlessAiClient(private val preferences: AiConfigProvider) {
                     "फंसे हुए हैं, तत्काल सहायता की आवश्यकता है!"
                 lower.contains("fire") ->
                     "आग का खतरा, कृपया सतर्क रहें!"
-                else -> "[अनुवाद]: $text"
+                else -> text
             }
             "japanese", "ja" -> when {
                 lower.contains("are you all safe") || lower.contains("are you safe") ->
@@ -430,7 +430,7 @@ class FeatherlessAiClient(private val preferences: AiConfigProvider) {
                     "閉じ込められています、至急救助が必要です！"
                 lower.contains("fire") ->
                     "火災の危険があります、警戒してください！"
-                else -> "［日本語訳］: $text"
+                else -> text
             }
             "bengali", "bn" -> when {
                 lower.contains("are you all safe") || lower.contains("are you safe") ->
@@ -447,7 +447,7 @@ class FeatherlessAiClient(private val preferences: AiConfigProvider) {
                     "আটকে পড়েছি, অবিলম্বে উদ্ধার সাহায্য প্রয়োজন!"
                 lower.contains("fire") ->
                     "আগুনের বিপদ, অনুগ্রহ করে সতর্ক থাকুন!"
-                else -> "[বাংলা অনুবাদ]: $text"
+                else -> text
             }
             "spanish", "es" -> when {
                 lower.contains("are you safe") -> "¿Están todos a salvo? La red celular e internet están caídos."
@@ -455,28 +455,28 @@ class FeatherlessAiClient(private val preferences: AiConfigProvider) {
                 lower.contains("medical") -> "¡Se requiere asistencia médica de emergencia!"
                 lower.contains("trapped") -> "¡Atrapados, se requiere rescate urgente!"
                 lower.contains("fire") -> "¡Peligro de incendio, manténgase alerta!"
-                else -> "[Traducción]: $text"
+                else -> text
             }
             "french", "fr" -> when {
                 lower.contains("are you safe") -> "Êtes-vous tous en sécurité ? Le réseau cellulaire est en panne."
                 lower.contains("we're safe") || lower.contains("we are safe") -> "Nous sommes en sécurité dans l'abri est."
                 lower.contains("medical") -> "Assistance médicale urgente requise !"
                 lower.contains("trapped") -> "Piégés, secours d'urgence demandés !"
-                else -> "[Traduction]: $text"
+                else -> text
             }
             "german", "de" -> when {
                 lower.contains("are you safe") -> "Sind Sie alle in Sicherheit? Mobilfunk und Internet sind ausgefallen."
                 lower.contains("we're safe") || lower.contains("we are safe") -> "Wir sind in Sicherheit in der östlichen Notunterkunft."
                 lower.contains("medical") -> "Dringende medizinische Hilfe erforderlich!"
-                else -> "[Übersetzung]: $text"
+                else -> text
             }
             "arabic", "ar" -> when {
                 lower.contains("are you safe") -> "هل الجميع بأمان؟ شبكة الهاتف والإنترنت معطلة تماماً هنا."
-                lower.contains("we're safe") || lower.contains("we are safe") -> "نحن بأمان. شكلنا شبكة مِش في المأوى الشرقي."
+                lower.contains("we're safe") || lower.contains("we are safe") -> "نحن بأمان. شكلना شبكة مِش في المأوى الشرقي."
                 lower.contains("medical") -> "مطلوب مساعدة طبية عاجلة!"
-                else -> "[ترجمة]: $text"
+                else -> text
             }
-            else -> "[$targetLanguage]: $text"
+            else -> text
         }
     }
 }
